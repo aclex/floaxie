@@ -5,7 +5,7 @@
 using namespace std;
 using namespace floaxie;
 
-int main(int argc, char* argv[])
+int main(int, char**)
 {
 	double pi = 0.1;
 	char buffer[128];
