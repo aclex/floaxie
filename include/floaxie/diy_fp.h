@@ -168,6 +168,8 @@ namespace floaxie
 
 			m_f = ac + (ad >> 32) + (bc >> 32) + (tmp >> 32);
 			m_e += rhs.m_e + 64;
+
+			return *this;
 		}
 
 		diy_fp operator*(const diy_fp& rhs) const noexcept
