@@ -1,9 +1,9 @@
 #include <iostream>
 
-#include "grisu.h"
-#include "prettify.h"
+#include "floaxie/dtoa.h"
 
 using namespace std;
+using namespace floaxie;
 
 int main(int argc, char* argv[])
 {
@@ -13,12 +13,8 @@ int main(int argc, char* argv[])
 	for (int i = 0; i < 128; ++i)
 		buffer[i] = 0;
 
-	int len = 0, K = 0;
-	grisu(pi, buffer, &len, &K);
-	cout << "pi: " << pi << ", buffer: " << buffer << ", len: " << len << ", K: " << K << std::endl;
-
-	prettify_string(buffer, 0, len, K);
-	cout << "pi: " << pi << ", buffer: " << buffer << std::endl;
+	dtoa(pi, buffer);
+	std::cout << "pi: " << pi << ", buffer: " << buffer << std::endl;
 
 	return 0;
 }

@@ -3,11 +3,12 @@
 #include <limits>
 #include <cstdlib>
 
-#include "grisu.h"
-#include "prettify.h"
+#include "floaxie/dtoa.h"
+
 #include "short_numbers.h"
 
 using namespace std;
+using namespace floaxie;
 
 int main(int argc, char* argv[])
 {
@@ -23,9 +24,7 @@ int main(int argc, char* argv[])
 	for (size_t i = 0; i < short_numbers_length; ++i)
 	{
 		pi = short_numbers[i];
-		grisu(pi, buffer, &len, &K);
-
-		prettify_string(buffer, 0, len, K);
+		dtoa(pi, buffer);
 		double test = strtod(buffer, nullptr);
 
 		if (test != pi)
