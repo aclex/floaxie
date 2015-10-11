@@ -15,8 +15,6 @@ int main(int argc, char* argv[])
 	double pi = 0.1;
 	char buffer[128];
 
-	int len = 0, K = 0;
-
 	random_device rd;
 	default_random_engine gen(rd());
 	uniform_real_distribution<> dis(0, 2);
