@@ -22,8 +22,6 @@
 #ifndef FLOAXIE_K_COMP_H
 #define FLOAXIE_K_COMP_H
 
-#include <cmath>
-
 namespace floaxie
 {
 	/* We ignore mantissa component (q) in exponent to eliminate
@@ -33,11 +31,9 @@ namespace floaxie
 	 * k_comp() function from reference paper where this component
 	 * is considered.
 	 */
-	template<int alpha, int gamma> inline int k_comp_exp(int e)
+	template<int alpha, int gamma> constexpr int k_comp_exp(int e)
 	{
-		constexpr static double one_div_log2_10(0.30102999566398114); // 1 / lg(10)
-
-		return std::ceil((alpha - e - 1) * one_div_log2_10);
+		return (alpha - e - 1) * 0.30102999566398114 + (alpha - e - 1 > 0); // 1 / lg(10) ≈ 0.30102999566398114
 	}
 }
 
