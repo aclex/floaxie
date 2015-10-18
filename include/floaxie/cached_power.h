@@ -30,7 +30,7 @@
 
 namespace floaxie
 {
-	static const uint64_t powers_ten[] =
+	constexpr uint64_t powers_ten[] =
 	{
 		0xbf29dcaba82fdeae , 0xeef453d6923bd65a , 0x9558b4661b6565f8 , 0xbaaee17fa23ebf76 ,
 		0xe95a99df8ace6f54 , 0x91d8a02bb6c10594 , 0xb64ec836a47146fa , 0xe3e27a444d8d98b8 ,
@@ -205,7 +205,7 @@ namespace floaxie
 		0xb3bd72ed2af29e20 , 0xe0accfa875af45a8 , 0x8c6c01c9498d8b89 , 0xaf87023b9bf0ee6b ,
 		0xdb68c2ca82ed2a06 , 0x892179be91d43a44 , 0xab69d82e364948d4
 	};
-	static const int powers_ten_e[] =
+	constexpr int powers_ten_e[] =
 	{
 		-1203 , -1200 , -1196 , -1193 ,
 		-1190 , -1186 , -1183 , -1180 ,
@@ -381,7 +381,7 @@ namespace floaxie
 		1069 , 1073 , 1076
 	};
 
-	inline diy_fp cached_power(int k)
+	inline diy_fp cached_power(int k) noexcept
 	{
 		constexpr static std::size_t pow_0_offset(343);
 

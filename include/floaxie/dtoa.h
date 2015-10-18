@@ -25,7 +25,7 @@
 
 namespace floaxie
 {
-	template<typename FloatType> inline void dtoa(FloatType v, char* buffer)
+	template<typename FloatType> inline void dtoa(FloatType v, char* buffer) noexcept
 	{
 		assert(!std::isnan(v));
 		assert(!std::isinf(v));

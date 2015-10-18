@@ -35,7 +35,7 @@ namespace floaxie
 	class diy_fp
 	{
 	public:
-		typedef std::uint_fast64_t mantissa_storage_type;
+		typedef std::uint64_t mantissa_storage_type;
 		typedef int exponent_storage_type;
 
 		template<typename NumericType> static constexpr std::size_t bit_size()
@@ -69,7 +69,7 @@ namespace floaxie
 	public:
 		diy_fp() = default;
 		diy_fp(const diy_fp&) = default;
-		constexpr diy_fp(mantissa_storage_type mantissa, exponent_storage_type exponent) noexcept : m_f(mantissa), m_e(exponent) { }
+		constexpr diy_fp(mantissa_storage_type mantissa, exponent_storage_type exponent) : m_f(mantissa), m_e(exponent) { }
 		template<typename FloatType> explicit diy_fp(FloatType d) noexcept
 		{
 			static_assert(std::numeric_limits<FloatType>::is_iec559, "Only IEEE-754 floating point types are supported");
@@ -102,17 +102,17 @@ namespace floaxie
 			}
 		}
 
-		constexpr mantissa_storage_type mantissa() const noexcept
+		constexpr mantissa_storage_type mantissa() const
 		{
 			return m_f;
 		}
 
-		constexpr exponent_storage_type exponent() const noexcept
+		constexpr exponent_storage_type exponent() const
 		{
 			return m_e;
 		}
 
-		inline bool is_normalized() const noexcept
+		bool is_normalized() const noexcept
 		{
 			return m_f & msb_value<mantissa_storage_type>();
 		}
@@ -203,7 +203,7 @@ namespace floaxie
 			return temp;
 		}
 
-		template<typename FloatType> static inline std::pair<diy_fp, diy_fp> boundaries(FloatType d) noexcept
+		template<typename FloatType> static std::pair<diy_fp, diy_fp> boundaries(FloatType d) noexcept
 		{
 			static_assert(std::numeric_limits<FloatType>::is_iec559, "Only IEEE-754 floating point types are supported");
 
