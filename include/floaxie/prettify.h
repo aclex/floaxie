@@ -50,34 +50,6 @@ namespace
 
 namespace floaxie
 {
-// 	inline void fill_exponent(int K, char* const buffer) noexcept
-// 	{
-// 		int i = 0;
-//
-// 		if (K < 0)
-// 		{
-// 			buffer[i++] = '-';
-// 			K = -K;
-// 		}
-//
-// 		if (K >= 100)
-// 		{
-// 			buffer[i++] = '0' + K / 100; K %= 100;
-// 			buffer[i++] = '0' + K / 10; K %= 10;
-// // 			buffer[i++] = '0' + K;
-// // 			buffer[i] = '\0';
-// 		}
-// 		else if (K >= 10)
-// 		{
-// 			buffer[i++] = '0' + K / 10; K %= 10;
-// // 			buffer[i++] = '0' + K;
-// // 			buffer[i] = '\0';
-// 		}
-//
-// 		buffer[i++] = '0' + K;
-// 		buffer[i] = '\0';
-// 	}
-
 	enum format_range {
 		lower_scientific_100,
 		lower_scientific_10,
@@ -124,16 +96,12 @@ namespace floaxie
 			/* leave the first digit. then add a '.' and at the end 'e...' */
 			std::memmove(buffer + 2, buffer + 1, len - 1);
 			buffer[1] = '.';
-// 			buffer[len + 1] = 'e';
-// 			fill_exponent<range>(dot_pos - 1, buffer + len + 2);
 			buffer += len;
 		}
-// 		else
-		{
-			/* just add 'e...' */
-			buffer[1] = 'e';
-			fill_exponent<range>(dot_pos - 1, buffer + 2);
-		}
+
+		/* add 'e...' */
+		buffer[1] = 'e';
+		fill_exponent<range>(dot_pos - 1, buffer + 2);
 	}
 
 	template<unsigned int threshold> inline format_range detect_range(const int dot_pos, const unsigned int len) noexcept
@@ -157,53 +125,11 @@ namespace floaxie
 
 	inline void prettify_string(char* buffer, int len, int k) noexcept
 	{
-// 		constexpr std::pair<int, int> scientific_threshold(-6, 21);
 		/* v = buffer * 10^k
 			kk is such that 10^(kk-1) <= v < 10^kk
 			this way kk gives the position of the comma.
 		*/
 		const int dot_pos = len + k;
-
-// 		if (len <= kk && kk <= scientific_threshold.second)
-// 		{
-// 			/* the first digits are already in. Add some 0s and call it a day. */
-// 			/* the 21 is a personal choice. Only 16 digits could possibly be relevant.
-// 				* Basically we want to print 12340000000 rather than 1234.0e7 or 1.234e10 */
-// 			std::memset(buffer + len, '0', kk - len + 2);
-// 			buffer[kk] = '.';
-// 			buffer[kk + 2] = '\0';
-// 		}
-// 		else if (0 < kk && kk <= scientific_threshold.second)
-// 		{
-// 			/* comma number. Just insert a '.' at the correct location. */
-// 			std::memmove(buffer + kk + 1, buffer + kk, len - kk);
-// 			buffer[kk] = '.';
-// 			buffer[len + 1] = '\0';
-// 		}
-// 		else if (scientific_threshold.first < kk && kk <= 0)
-// 		{
-// 			/* something like 0.000abcde.
-// 				* add '0.' and some '0's */
-// 			const int offset = 2 - kk;
-// 			std::memmove(buffer + offset, buffer, len);
-// 			std::memset(buffer, '0', offset);
-// 			buffer[1] = '.';
-// 			buffer[len + offset] = '\0';
-// 		}
-// 		else if (len == 1)
-// 		{
-// 			/* just add 'e...' */
-// 			buffer[1] = 'e';
-// 			fill_exponent(kk - 1, buffer + 2);
-// 		}
-// 		else
-// 		{
-// 			/* leave the first digit. then add a '.' and at the end 'e...' */
-// 			std::memmove(buffer + 2, buffer + 1, len - 1);
-// 			buffer[1] = '.';
-// 			buffer[len + 1] = 'e';
-// 			fill_exponent(kk - 1, buffer + len + 2);
-// 		}
 
 		switch (detect_range<12>(dot_pos, len))
 		{
