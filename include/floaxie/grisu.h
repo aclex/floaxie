@@ -28,6 +28,7 @@
 #define FLOAXIE_GRISU_H
 
 #include <cstdint>
+#include <cstring>
 
 #include <floaxie/diy_fp.h>
 #include <floaxie/cached_power.h>
@@ -35,72 +36,50 @@
 
 namespace floaxie
 {
-	template<typename NumericType> constexpr NumericType static_pow(NumericType base, NumericType pow) noexcept
+
+	template<unsigned int base, unsigned int pow> struct static_pow_helper
 	{
-		return pow == 0 ? 1 : base * static_pow(base, pow - 1);
+		static const unsigned int value = base * static_pow_helper<base, pow - 1>::value;
+	};
+
+	template<unsigned int base> struct static_pow_helper<base, 0>
+	{
+		static const unsigned int value = 1;
+	};
+
+	template<unsigned int base, unsigned int pow> constexpr unsigned long static_pow()
+	{
+		static_assert(base > 0, "Base should be positive");
+		return static_pow_helper<base, pow>::value;
 	}
 
-	template<typename NumericType> constexpr NumericType static_pow10(NumericType pow)
+	template<unsigned int pow> constexpr std::pair<int, std::uint32_t> make_kappa_div()
 	{
-		return static_pow(static_cast<NumericType>(10), pow);
+		return std::pair<int, std::uint32_t>(pow, static_pow<10, pow - 1>());
 	}
 
-	constexpr std::pair<int, std::uint32_t> make_kappa_div(std::uint32_t pow)
+	template<> constexpr std::pair<int, std::uint32_t> make_kappa_div<0>()
 	{
-		return std::pair<int, std::uint32_t>(pow, static_pow10(pow > 0 ? pow - 1 : 0));
+		return std::pair<int, std::uint32_t>(0, 1);
 	}
 
-	inline std::pair<int, std::uint32_t> calculate_kappa_div(std::uint32_t n)
+	inline std::pair<int, std::uint32_t> calculate_kappa_div(std::uint32_t n) noexcept
 	{
-		if (n < static_pow10(4))
-		{
-			if (n < static_pow10(2))
-			{
-				if (n < static_pow10(1))
-					return make_kappa_div(1);
-				else
-					return make_kappa_div(2);
-			}
-			else
-			{
-				if (n < static_pow10(3))
-					return make_kappa_div(3);
-				else
-					return make_kappa_div(4);
-			}
-		}
-		else
-		{
-			if (n < static_pow10(6))
-			{
-				if (n < static_pow10(5))
-					return make_kappa_div(5);
-				else
-					return make_kappa_div(6);
-			}
-			else
-			{
-				if (n < static_pow10(8))
-				{
-					if (n < static_pow10(7))
-						return make_kappa_div(7);
-					else
-						return make_kappa_div(8);
-				}
-				else
-				{
-					if (n < static_pow10(9))
-						return make_kappa_div(9);
-					else
-						return make_kappa_div(10);
-				}
-			}
-		}
+		if (n < static_pow<10, 1>()) return make_kappa_div<1>();
+		if (n < static_pow<10, 2>()) return make_kappa_div<2>();
+		if (n < static_pow<10, 3>()) return make_kappa_div<3>();
+		if (n < static_pow<10, 4>()) return make_kappa_div<4>();
+		if (n < static_pow<10, 5>()) return make_kappa_div<5>();
+		if (n < static_pow<10, 6>()) return make_kappa_div<6>();
+		if (n < static_pow<10, 7>()) return make_kappa_div<7>();
+		if (n < static_pow<10, 8>()) return make_kappa_div<8>();
+		if (n < static_pow<10, 9>()) return make_kappa_div<9>();
+		return make_kappa_div<10>();
 	}
 
-	template<int alpha, int gamma> void digit_gen(const diy_fp& Mp, const diy_fp& delta, char* buffer, int* len, int* K);
+	template<int alpha, int gamma> inline void digit_gen(const diy_fp& Mp, const diy_fp& delta, char* buffer, int* len, int* K) noexcept;
 
-	template<> void digit_gen<-35, -32>(const diy_fp& Mp, const diy_fp& delta, char* buffer, int* len, int* K)
+	template<> inline void digit_gen<-35, -32>(const diy_fp& Mp, const diy_fp& delta, char* buffer, int* len, int* K) noexcept
 	{
 		assert(Mp.exponent() <= 0);
 
@@ -115,16 +94,16 @@ namespace floaxie
 
 		auto delta_f = delta.mantissa();
 
+		const bool close_to_delta = p2 <= delta_f;
+
 		if (p1)
 		{
-			const bool close_to_delta = p2 <= delta_f;
-
 			auto&& kappa_div(calculate_kappa_div(p1));
 
 			int& kappa(kappa_div.first);
 			std::uint32_t& div(kappa_div.second);
 
-			while (kappa > 0)
+			while (kappa > 0 && p1)
 			{
 				buffer[(*len)++] = '0' + p1 / div;
 
@@ -132,40 +111,43 @@ namespace floaxie
 
 				kappa--;
 				div /= 10;
-
-				if (close_to_delta && !p1)
-				{
-					*K += kappa;
-					return;
-				}
 			}
-		}
 
-		if (p2)
-		{
-			const bool some_already_written = (*len) > 0;
-			int kappa = 0;
-
-			while (p2 > delta_f)
+			if (close_to_delta)
 			{
-				p2 *= 10;
-
-				const int d = p2 >> -one.exponent();
-
-				if (some_already_written || d)
-					buffer[(*len)++] = '0' + d;
-
-				p2 &= one.mantissa() - 1;
-
-				kappa--;
-				delta_f *= 10;
+				*K += kappa;
+				return;
 			}
-
-			*K += kappa;
+			else
+			{
+				std::memset(buffer + (*len), '0', kappa);
+				(*len) += kappa;
+				kappa = 0;
+			}
 		}
+
+		const bool some_already_written = (*len) > 0;
+		int kappa = 0;
+
+		while (p2 > delta_f)
+		{
+			p2 *= 10;
+
+			const int d = p2 >> -one.exponent();
+
+			if (some_already_written || d)
+				buffer[(*len)++] = '0' + d;
+
+			p2 &= one.mantissa() - 1;
+
+			kappa--;
+			delta_f *= 10;
+		}
+
+		*K += kappa;
 	}
 
-	template<int alpha, int gamma, typename FloatType> void grisu(FloatType v, char* buffer, int* length, int* K)
+	template<int alpha, int gamma, typename FloatType> inline void grisu(FloatType v, char* buffer, int* length, int* K) noexcept
 	{
 		std::pair<diy_fp, diy_fp>&& w(diy_fp::boundaries(v));
 		diy_fp &w_m(w.first), &w_p(w.second);
