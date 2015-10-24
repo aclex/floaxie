@@ -39,15 +39,16 @@ namespace floaxie
 		}
 		else
 		{
-			if (v < 0)
-			{
-				*buffer++ = '-';
-				v = -v;
-			}
+			*buffer = '-';
+			buffer += v < 0;
+
+			constexpr int alpha(-35), gamma(-32);
+			constexpr unsigned int decimal_scientific_threshold(16);
 
 			int len, K;
-			grisu<-35, -32>(v, buffer, &len, &K);
-			prettify_string(buffer, len, K);
+
+			grisu2<alpha, gamma>(v, buffer, &len, &K);
+			prettify<decimal_scientific_threshold>(buffer, len, K);
 		}
 	}
 }
