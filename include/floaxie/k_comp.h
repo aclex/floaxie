@@ -33,7 +33,7 @@ namespace floaxie
 	 */
 	template<int alpha, int gamma> constexpr int k_comp_exp(int e)
 	{
-		return (alpha - e - 1) * 0.30102999566398114 + (alpha - e - 1 > 0); // 1 / lg(10) ≈ 0.30102999566398114
+		return (alpha - e - 1) * 0.30102999566398114 + (e + 1 < alpha); // 1 / lg(10) ≈ 0.30102999566398114
 	}
 }
 
