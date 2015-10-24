@@ -131,6 +131,7 @@ namespace floaxie
 
 			constexpr mantissa_storage_type my_mantissa_size(std::numeric_limits<mantissa_storage_type>::digits);
 			constexpr mantissa_storage_type e_diff = my_mantissa_size - original_matissa_bit_width - 1;
+
 			m_f <<= e_diff;
 			m_e -= e_diff;
 		}
