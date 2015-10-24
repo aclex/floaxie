@@ -33,26 +33,10 @@
 #include <floaxie/diy_fp.h>
 #include <floaxie/cached_power.h>
 #include <floaxie/k_comp.h>
+#include <floaxie/static_pow.h>
 
 namespace floaxie
 {
-
-	template<unsigned int base, unsigned int pow> struct static_pow_helper
-	{
-		static const unsigned int value = base * static_pow_helper<base, pow - 1>::value;
-	};
-
-	template<unsigned int base> struct static_pow_helper<base, 0>
-	{
-		static const unsigned int value = 1;
-	};
-
-	template<unsigned int base, unsigned int pow> constexpr unsigned long static_pow()
-	{
-		static_assert(base > 0, "Base should be positive");
-		return static_pow_helper<base, pow>::value;
-	}
-
 	template<unsigned int pow> constexpr std::pair<int, std::uint32_t> make_kappa_div()
 	{
 		return std::pair<int, std::uint32_t>(pow, static_pow<10, pow - 1>());
@@ -77,11 +61,13 @@ namespace floaxie
 		return make_kappa_div<10>();
 	}
 
-	template<int alpha, int gamma> inline void digit_gen(const diy_fp& Mp, const diy_fp& delta, char* buffer, int* len, int* K) noexcept;
+	template<bool positive_exponent> inline void digit_gen(const diy_fp& Mp, const diy_fp& Mm, char* buffer, int* len, int* K) noexcept;
 
-	template<> inline void digit_gen<-35, -32>(const diy_fp& Mp, const diy_fp& delta, char* buffer, int* len, int* K) noexcept
+	template<> inline void digit_gen<false>(const diy_fp& Mp, const diy_fp& Mm, char* buffer, int* len, int* K) noexcept
 	{
 		assert(Mp.exponent() <= 0);
+
+		const diy_fp& delta(Mp - Mm);
 
 		const diy_fp one(0x1ul << -Mp.exponent(), Mp.exponent());
 
@@ -147,8 +133,17 @@ namespace floaxie
 		*K += kappa;
 	}
 
-	template<int alpha, int gamma, typename FloatType> inline void grisu(FloatType v, char* buffer, int* length, int* K) noexcept
+	template<int alpha, int gamma> inline void digit_gen(const diy_fp& Mp, const diy_fp& Mm, char* buffer, int* len, int* K) noexcept
 	{
+		constexpr bool exponent_is_positive = alpha > 0 && gamma > 0;
+		digit_gen<exponent_is_positive>(Mp, Mm, buffer, len, K);
+	}
+
+	template<int alpha, int gamma, typename FloatType> inline void grisu2(FloatType v, char* buffer, int* length, int* K) noexcept
+	{
+		static_assert(alpha <= gamma - 3,
+			"It's imposed that γ ⩾ α + 3, since otherwise it's not always possible to find a proper decimal cached power");
+
 		std::pair<diy_fp, diy_fp>&& w(diy_fp::boundaries(v));
 		diy_fp &w_m(w.first), &w_p(w.second);
 
@@ -161,11 +156,9 @@ namespace floaxie
 		++w_m;
 		--w_p;
 
-		const diy_fp& delta(w_p - w_m);
-
 		*K = -mk;
 
-		digit_gen<alpha, gamma>(w_p, delta, buffer, length, K);
+		digit_gen<alpha, gamma>(w_p, w_m, buffer, length, K);
 	}
 }
 
