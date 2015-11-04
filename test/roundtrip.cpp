@@ -3,7 +3,7 @@
 #include <limits>
 #include <cstdlib>
 
-#include "floaxie/dtoa.h"
+#include "floaxie/ftoa.h"
 
 #include "short_numbers.h"
 
@@ -22,7 +22,7 @@ int main(int, char**)
 	for (size_t i = 0; i < short_numbers_length; ++i)
 	{
 		pi = short_numbers[i];
-		dtoa(pi, buffer);
+		ftoa(pi, buffer);
 		double test = strtod(buffer, nullptr);
 
 		if (test != pi)

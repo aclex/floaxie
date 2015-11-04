@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef FLOAXIE_DTOA_H
-#define FLOAXIE_DTOA_H
+#ifndef FLOAXIE_FTOA_H
+#define FLOAXIE_FTOA_H
 
 #include <cmath>
 #include <cassert>
@@ -25,7 +25,7 @@
 
 namespace floaxie
 {
-	template<typename FloatType> inline void dtoa(FloatType v, char* buffer) noexcept
+	template<typename FloatType> inline void ftoa(FloatType v, char* buffer) noexcept
 	{
 		assert(!std::isnan(v));
 		assert(!std::isinf(v));
@@ -53,4 +53,4 @@ namespace floaxie
 	}
 }
 
-#endif // FLOAXIE_DTOA_H
+#endif // FLOAXIE_FTOA_H

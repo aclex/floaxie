@@ -1,4 +1,4 @@
-#include "floaxie/dtoa.h"
+#include "floaxie/ftoa.h"
 
 #include "../test/short_numbers.h"
 
@@ -11,7 +11,7 @@ int main(int, char**)
 
 	for (size_t i = 0; i < short_numbers_length; ++i)
 	{
-		dtoa(short_numbers[i], buffer);
+		ftoa(short_numbers[i], buffer);
 	}
 
 	return 0;
