@@ -24,6 +24,8 @@
 
 namespace floaxie
 {
+	constexpr auto lg_2(0.30102999566398114); // 1 / log2(10) = lg(2) ≈ 0.30102999566398114
+
 	/* We ignore mantissa component (q) in exponent to eliminate
 	 * excessive add and subtract of it during K computation.
 	 *
@@ -33,7 +35,7 @@ namespace floaxie
 	 */
 	template<int alpha, int gamma> constexpr int k_comp_exp(int e)
 	{
-		return (alpha - e - 1) * 0.30102999566398114 + (e + 1 < alpha); // 1 / log2(10) ≈ 0.30102999566398114
+		return (alpha - e - 1) * lg_2 + (e + 1 < alpha);
 	}
 }
 

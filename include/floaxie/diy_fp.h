@@ -30,8 +30,21 @@
 #include <ostream>
 #include <utility>
 
+#include <iostream>
+#include <bitset>
+
 namespace floaxie
 {
+	template<typename NumericType> inline bool round_up(NumericType last_bits, std::size_t lsb_pow)
+	{
+		const NumericType round_bit(0x1ul << (lsb_pow - 1));
+		const NumericType check_mask((round_bit << 2) - 1);
+
+		std::cout << "round_bit: " << bool(last_bits & round_bit) << std::endl;
+
+		return (last_bits & round_bit) && ((last_bits & check_mask) > round_bit);
+	}
+
 	class diy_fp
 	{
 	public:
@@ -65,6 +78,28 @@ namespace floaxie
 			static_assert(std::numeric_limits<FloatType>::is_iec559, "Only IEEE-754 floating point types are supported");
 			return 0x1ul << (std::numeric_limits<FloatType>::digits - 1);
 		}
+
+// 		template<typename FloatType> static bool round_up(mantissa_storage_type f)
+// 		{
+// 			constexpr auto mantissa_bit_size(std::numeric_limits<FloatType>::digits - 1); // remember hidden bit
+// 			constexpr mantissa_storage_type my_mantissa_size(std::numeric_limits<mantissa_storage_type>::digits);
+//
+// 			constexpr mantissa_storage_type lsb_mask(0x1ul << (my_mantissa_size - mantissa_bit_size + 1));
+// 			constexpr mantissa_storage_type rb_mask(0x1ul << (my_mantissa_size - mantissa_bit_size));
+// 			constexpr mantissa_storage_type tail_mask((0x1ul << (my_mantissa_size - mantissa_bit_size - 1)) - 1);
+//
+// // 			if (f & rb_mask)
+// // 			{
+// // 				if (f & tail_mask || f & lsb_mask)
+// // 					return true;
+// // 				else
+// // 					return false;
+// // 			}
+// // 			else
+// // 				return false;
+//
+// 			return (f & rb_mask) & ((f & tail_mask) | (f & lsb_mask));
+// 		}
 
 	public:
 		diy_fp() = default;
@@ -100,6 +135,62 @@ namespace floaxie
 			{
 				m_e = 1 - exponent_bias;
 			}
+
+			std::cout << "f from double: " << std::bitset<64>(m_f) << std::endl;
+		}
+
+		template<typename FloatType> explicit operator FloatType() const noexcept
+		{
+			static_assert(std::numeric_limits<FloatType>::is_iec559, "Only IEEE-754 floating point types are supported");
+
+			std::cout << "is_normalized: " << is_normalized() << std::endl;
+			assert(is_normalized());
+
+			union
+			{
+				FloatType value;
+				mantissa_storage_type parts;
+			};
+
+			constexpr auto mantissa_bit_size(std::numeric_limits<FloatType>::digits - 1); // remember hidden bit
+			constexpr mantissa_storage_type my_mantissa_size(std::numeric_limits<mantissa_storage_type>::digits);
+			constexpr mantissa_storage_type mantissa_mask(max_integer_value<FloatType>() >> (my_mantissa_size - mantissa_bit_size));
+			constexpr exponent_storage_type exponent_bias(std::numeric_limits<FloatType>::max_exponent - 1 + mantissa_bit_size);
+			constexpr std::size_t lsb_pow(my_mantissa_size - (mantissa_bit_size + 1));
+
+// 			const auto f(m_f + 1); // provoke brewing round up by 1 ulp (i.e. lead to round-to-nearest on truncation)
+			const auto f(m_f);
+
+			std::cout << "my_mantissa_size: " << my_mantissa_size <<", theirs mantissa size: " << mantissa_bit_size << std::endl;
+			std::cout << "f: " << std::bitset<64>(f) << std::endl;
+// 			std::cout << "mask: " << std::bitset<64>(mantissa_mask) << std::endl;
+			std::cout << "would write: " << std::bitset<64>((f >> lsb_pow) & mantissa_mask) << std::endl;
+			std::cout << "lsb_pow: " << lsb_pow << std::endl;
+
+// 			if (m_e >= std::numeric_limits<FloatType>::max_exponent)
+// 			{
+// 				return std::numeric_limits<FloatType>::infinity();
+// 			}
+//
+// 			if (m_e < std::numeric_limits<FloatType>::min_exponent - exponent_bias - my_mantissa_size)
+// 			{
+// 				return FloatType(0);
+// 			}
+//
+// 			const exponent_storage_type denorm_exp(std::numeric_limits<FloatType>::min_exponent - exponent_bias - m_e);
+//
+// 			assert(denorm_exp < my_mantissa_size);
+//
+// 			if (denorm_exp > 0)
+// 			{
+// 				m_e += denorm_exp;
+//
+// 			}
+
+			parts = (m_e + lsb_pow + exponent_bias) << mantissa_bit_size;
+			parts |= ((f >> lsb_pow) + round_up(f, lsb_pow)) & mantissa_mask;
+
+			return value;
 		}
 
 		constexpr mantissa_storage_type mantissa() const
@@ -114,14 +205,18 @@ namespace floaxie
 
 		bool is_normalized() const noexcept
 		{
+// 			std::cout << "mant: " << std::bitset<64>(m_f) << std::endl;
+// 			std::cout << "mask: " << std::bitset<64>(msb_value<mantissa_storage_type>()) << std::endl;
 			return m_f & msb_value<mantissa_storage_type>();
 		}
 
-		template<std::size_t original_matissa_bit_width> void normalize() noexcept
+		template<std::size_t original_matissa_bit_width> std::size_t normalize() noexcept
 		{
 			static_assert(original_matissa_bit_width >= 0, "Mantissa bit width should be >= 0");
 
 			assert(!is_normalized());
+
+			const auto initial_e = m_e;
 
 			while (!(m_f & hidden_bit<original_matissa_bit_width>()))
 			{
@@ -134,6 +229,13 @@ namespace floaxie
 
 			m_f <<= e_diff;
 			m_e -= e_diff;
+
+			return initial_e - m_e;
+		}
+
+		std::size_t normalize() noexcept
+		{
+			return normalize<std::numeric_limits<double>::digits>();
 		}
 
 		diy_fp& operator-=(const diy_fp& rhs) noexcept
@@ -153,6 +255,9 @@ namespace floaxie
 
 		diy_fp& operator*=(const diy_fp& rhs) noexcept
 		{
+			std::cout << "operator*" << std::endl;
+			std::cout << "op1: " << (*this) << std::endl;
+			std::cout << "op2: " << (*this) << std::endl;
 			constexpr auto mask_32 = 0xffffffff;
 
 			const mantissa_storage_type a = m_f >> 32;
@@ -171,6 +276,264 @@ namespace floaxie
 			m_e += rhs.m_e + 64;
 
 			return *this;
+		}
+
+		diy_fp& precise_multiply(const diy_fp& rhs) noexcept
+		{
+			std::cout << "precise_multiply" << std::endl;
+			std::cout << "op2: " << (*this) << std::endl;
+			std::cout << "op2: " << rhs << std::endl;
+			std::cout << "op1: mantissa hex: " << std::hex << m_f << ", e: " << m_e << std::endl;
+			std::cout << "op2: mantissa hex: " << std::hex << rhs.m_f << ", e: " << rhs.m_e << std::endl;
+			constexpr auto mask_32 = 0xffffffff;
+
+			const mantissa_storage_type a = m_f >> 32;
+			const mantissa_storage_type b = m_f & mask_32;
+			const mantissa_storage_type c = rhs.m_f >> 32;
+			const mantissa_storage_type d = rhs.m_f & mask_32;
+
+			const mantissa_storage_type ac = a * c;
+			const mantissa_storage_type bc = b * c;
+			const mantissa_storage_type ad = a * d;
+			const mantissa_storage_type bd = b * d;
+
+			mantissa_storage_type rl = bd + (((ad + bc) & mask_32) << 32);
+			mantissa_storage_type rh = ac + ((ad + bc) >> 32);
+
+			std::cout << "result hex: higher: " << std::hex << rh << ", lower: " << std::hex << rl << std::endl;
+
+			std::cout << "result higher binary: " << std::bitset<64>(rh) << std::endl;
+			std::cout << "result lower binary:  " << std::bitset<64>(rl) << std::endl;
+
+			std::size_t shift_count(0);
+
+			while (!(rh & msb_value<mantissa_storage_type>()))
+			{
+				rh <<= 1;
+				++shift_count;
+			}
+
+			m_f = rh;
+			if (shift_count)
+				m_f +=  rl >> (bit_size<mantissa_storage_type>() - shift_count);
+
+			const mantissa_storage_type round_bit_mask(0x1ul << (bit_size<mantissa_storage_type>() - shift_count - 1));
+
+			std::cout << "shift_count: " << shift_count << std::endl;
+// 			std::cout << "residue: " << (rl >> (bit_size<mantissa_storage_type>() - shift_count)) << std::endl;
+// 			std::cout << "residue: " << (rl >> 64) << std::endl;
+
+			const bool should_round_up(rl & round_bit_mask);
+			std::cout << "should_round_up: " << should_round_up << std::endl;
+
+			if (should_round_up)
+			{
+				if (m_f < std::numeric_limits<diy_fp::mantissa_storage_type>::max())
+				{
+					++m_f;
+				}
+				else
+				{
+					m_f >>= 1;
+					++m_f;
+					++m_e;
+				}
+
+				const mantissa_storage_type epsilon_bit_mask(0x1ul << (bit_size<mantissa_storage_type>() - shift_count - 2));
+				m_f |= bool(rl & epsilon_bit_mask); // copy '1' from next-to-round bit to ulp to move value from middle after rounding
+			}
+
+			m_e += rhs.m_e + 64 - static_cast<int>(shift_count);
+
+			return (*this);
+		}
+
+		diy_fp& precise_multiply2(const diy_fp& rhs) noexcept
+		{
+			std::cout << "precise_multiply2" << std::endl;
+			std::cout << "op2: " << (*this) << std::endl;
+			std::cout << "op2: " << rhs << std::endl;
+			std::cout << "op1: mantissa hex: " << std::hex << m_f << ", e: " << m_e << std::endl;
+			std::cout << "op2: mantissa hex: " << std::hex << rhs.m_f << ", e: " << rhs.m_e << std::endl;
+			constexpr auto mask_32 = 0xffffffff;
+
+			const mantissa_storage_type a = m_f >> 32;
+			const mantissa_storage_type b = m_f & mask_32;
+			const mantissa_storage_type c = rhs.m_f >> 32;
+			const mantissa_storage_type d = rhs.m_f & mask_32;
+
+			const mantissa_storage_type ac = a * c;
+			const mantissa_storage_type bc = b * c;
+			const mantissa_storage_type ad = a * d;
+			const mantissa_storage_type bd = b * d;
+
+			const mantissa_storage_type rz = bd;
+			const mantissa_storage_type ry = (rz >> 32) + (ad & mask_32) + (bc & mask_32);
+			const mantissa_storage_type rx = (ry >> 32) + (ad >> 32) + (bc >> 32) + (ac & mask_32);
+			const mantissa_storage_type rw = (rx >> 32) + (ac >> 32);
+
+			std::cout << "rw hex: " << std::hex << rw << std::endl;
+
+			mantissa_storage_type rl = ((ry & mask_32) << 32) | (rz & mask_32);
+			mantissa_storage_type rh = ((rw & mask_32) << 32) | (rx & mask_32);
+
+			std::cout << "result hex: higher: " << std::hex << rh << ", lower: " << std::hex << rl << std::endl;
+
+			std::cout << "result higher binary: " << std::bitset<64>(rh) << std::endl;
+			std::cout << "result lower binary:  " << std::bitset<64>(rl) << std::endl;
+			std::cout << "result lower decimal: " << std::dec << rl << std::endl;
+			std::cout << "type maximum:         " << std::numeric_limits<std::uint64_t>::max() << std::endl;
+
+			std::size_t shift_count(0);
+
+			while (!(rh & msb_value<mantissa_storage_type>()))
+			{
+				rh <<= 1;
+				++shift_count;
+			}
+
+			m_f = rh;
+			if (shift_count)
+			{
+				m_f +=  rl >> (bit_size<mantissa_storage_type>() - shift_count);
+				std::cout << "rl copied prefix binary: " << std::bitset<64>(rl >> (bit_size<mantissa_storage_type>() - shift_count)) << std::endl;
+				rl <<= shift_count;
+
+				std::cout << "rl[shifted] binary:  " << std::bitset<64>(rl) << std::endl;
+				std::cout << "rl[shifted] decimal: " << std::dec << (rl) << std::endl;
+				std::cout << "type maximum:        " << std::numeric_limits<std::uint64_t>::max() << std::endl;
+			}
+
+			const mantissa_storage_type round_bit_mask(0x1ul << (bit_size<mantissa_storage_type>() - 1));
+			std::cout << "rl[shifted] binary:    " << std::bitset<64>(rl) << std::endl;
+			std::cout << "round_bit_mask binary: " << std::bitset<64>(round_bit_mask) << std::endl;
+
+			std::cout << "shift_count: " << shift_count << std::endl;
+// 			std::cout << "residue: " << (rl >> (bit_size<mantissa_storage_type>() - shift_count)) << std::endl;
+// 			std::cout << "residue: " << (rl >> 64) << std::endl;
+
+			const bool should_round_up(rl & round_bit_mask);
+			std::cout << "should_round_up: " << should_round_up << std::endl;
+
+			if (should_round_up)
+			{
+				if (m_f < std::numeric_limits<diy_fp::mantissa_storage_type>::max())
+				{
+					++m_f;
+				}
+				else
+				{
+					m_f >>= 1;
+					++m_f;
+					++m_e;
+				}
+
+				const mantissa_storage_type epsilon_bit_mask(0x1ul << (bit_size<mantissa_storage_type>() - 2));
+				m_f |= bool(rl & epsilon_bit_mask); // copy '1' from next-to-round bit to ulp to move value from middle after rounding
+			}
+
+			std::cout << "final mantissa binary: " << std::bitset<64>(m_f) << std::endl;
+
+			m_e += rhs.m_e + 64 - static_cast<int>(shift_count);
+
+			std::cout << std::dec;
+
+			return (*this);
+		}
+
+		diy_fp& precise_multiply3(const diy_fp& rhs) noexcept
+		{
+			std::cout << "precise_multiply2" << std::endl;
+			std::cout << "op2: " << (*this) << std::endl;
+			std::cout << "op2: " << rhs << std::endl;
+			std::cout << "op1: mantissa hex: " << std::hex << m_f << ", e: " << m_e << std::endl;
+			std::cout << "op2: mantissa hex: " << std::hex << rhs.m_f << ", e: " << rhs.m_e << std::endl;
+			constexpr auto mask_32 = 0xffffffff;
+
+			const mantissa_storage_type a = m_f >> 32;
+			const mantissa_storage_type b = m_f & mask_32;
+			const mantissa_storage_type c = rhs.m_f >> 32;
+			const mantissa_storage_type d = rhs.m_f & mask_32;
+
+			const mantissa_storage_type ac = a * c;
+			const mantissa_storage_type bc = b * c;
+			const mantissa_storage_type ad = a * d;
+			const mantissa_storage_type bd = b * d;
+
+			const mantissa_storage_type rz = bd;
+			const mantissa_storage_type ry = (rz >> 32) + (ad & mask_32) + (bc & mask_32);
+			const mantissa_storage_type rx = (ry >> 32) + (ad >> 32) + (bc >> 32) + (ac & mask_32);
+			const mantissa_storage_type rw = (rx >> 32) + (ac >> 32);
+
+			std::cout << "rw hex: " << std::hex << rw << std::endl;
+
+			mantissa_storage_type rl = ((ry & mask_32) << 32) | (rz & mask_32);
+			mantissa_storage_type rh = ((rw & mask_32) << 32) | (rx & mask_32);
+
+			std::cout << "result hex: higher: " << std::hex << rh << ", lower: " << std::hex << rl << std::endl;
+
+			std::cout << "result higher binary: " << std::bitset<64>(rh) << std::endl;
+			std::cout << "result lower binary:  " << std::bitset<64>(rl) << std::endl;
+			std::cout << "result lower decimal: " << std::dec << rl << std::endl;
+			std::cout << "type maximum:         " << std::numeric_limits<std::uint64_t>::max() << std::endl;
+
+			std::size_t shift_count(0);
+
+			const mantissa_storage_type round_bit_mask(0x1ul << (bit_size<mantissa_storage_type>() - shift_count - 1));
+			std::cout << "rl again binary:       " << std::bitset<64>(rl) << std::endl;
+			std::cout << "round_bit_mask binary: " << std::bitset<64>(round_bit_mask) << std::endl;
+
+			std::cout << "shift_count: " << shift_count << std::endl;
+// 			std::cout << "residue: " << (rl >> (bit_size<mantissa_storage_type>() - shift_count)) << std::endl;
+// 			std::cout << "residue: " << (rl >> 64) << std::endl;
+
+			const bool should_round_up(rl & round_bit_mask);
+			std::cout << "should_round_up: " << should_round_up << std::endl;
+
+			m_f = rh;
+
+			if (should_round_up)
+			{
+				if (m_f < std::numeric_limits<diy_fp::mantissa_storage_type>::max())
+				{
+					++m_f;
+				}
+				else
+				{
+					m_f >>= 1;
+					++m_f;
+					++m_e;
+				}
+			}
+
+			while (!(m_f & msb_value<mantissa_storage_type>()))
+			{
+				m_f <<= 1;
+				++shift_count;
+			}
+// 			if (shift_count)
+// 			{
+// 				m_f +=  rl >> (bit_size<mantissa_storage_type>() - shift_count);
+// 				std::cout << "rl copied prefix binary: " << std::bitset<64>(rl << (bit_size<mantissa_storage_type>() - shift_count)) << std::endl;
+//
+// 				std::cout << "result lower[shifted] binary:  " << std::bitset<64>(rl << shift_count) << std::endl;
+// 				std::cout << "result lower[shifted] decimal: " << std::dec << (rl << shift_count) << std::endl;
+// 				std::cout << "type maximum:                  " << std::numeric_limits<std::uint64_t>::max() << std::endl;
+// 			}
+
+			if (should_round_up)
+			{
+				const mantissa_storage_type epsilon_bit_mask(0x1ul << (bit_size<mantissa_storage_type>() - 1));
+				m_f |= bool(rl & epsilon_bit_mask); // copy '1' from next-to-round bit to ulp to move value from middle after rounding
+			}
+
+			std::cout << "final mantissa binary: " << std::bitset<64>(m_f) << std::endl;
+
+			m_e += rhs.m_e + 64 - static_cast<int>(shift_count);
+
+			std::cout << std::dec;
+
+			return (*this);
 		}
 
 		diy_fp operator*(const diy_fp& rhs) const noexcept
