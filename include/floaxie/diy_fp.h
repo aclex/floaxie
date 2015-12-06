@@ -33,6 +33,8 @@
 #include <iostream>
 #include <bitset>
 
+#include <floaxie/utility.h>
+
 namespace floaxie
 {
 	template<typename NumericType> inline bool round_up(NumericType last_bits, std::size_t lsb_pow)
@@ -164,31 +166,31 @@ namespace floaxie
 			std::cout << "my_mantissa_size: " << my_mantissa_size <<", theirs mantissa size: " << mantissa_bit_size << std::endl;
 			std::cout << "f: " << std::bitset<64>(f) << std::endl;
 // 			std::cout << "mask: " << std::bitset<64>(mantissa_mask) << std::endl;
-			std::cout << "would write: " << std::bitset<64>((f >> lsb_pow) & mantissa_mask) << std::endl;
-			std::cout << "lsb_pow: " << lsb_pow << std::endl;
 
-// 			if (m_e >= std::numeric_limits<FloatType>::max_exponent)
-// 			{
-// 				return std::numeric_limits<FloatType>::infinity();
-// 			}
-//
-// 			if (m_e < std::numeric_limits<FloatType>::min_exponent - exponent_bias - my_mantissa_size)
-// 			{
-// 				return FloatType(0);
-// 			}
-//
-// 			const exponent_storage_type denorm_exp(std::numeric_limits<FloatType>::min_exponent - exponent_bias - m_e);
-//
-// 			assert(denorm_exp < my_mantissa_size);
-//
-// 			if (denorm_exp > 0)
-// 			{
-// 				m_e += denorm_exp;
-//
-// 			}
+			if (m_e >= std::numeric_limits<FloatType>::max_exponent)
+			{
+				return std::numeric_limits<FloatType>::infinity();
+			}
 
-			parts = (m_e + lsb_pow + exponent_bias) << mantissa_bit_size;
-			parts |= ((f >> lsb_pow) + round_up(f, lsb_pow)) & mantissa_mask;
+			std::cout << "exp: " << m_e << ", min_exponent: " << std::numeric_limits<FloatType>::min_exponent << std::endl;
+
+			if (m_e + int(my_mantissa_size) < std::numeric_limits<FloatType>::min_exponent - int(mantissa_bit_size))
+			{
+				return FloatType(0);
+			}
+
+// 			const std::size_t denorm_exp(positive_part(m_e + exponent_storage_type(my_mantissa_size) -
+// 					(std::numeric_limits<FloatType>::min_exponent - int(mantissa_bit_size))));
+			const std::size_t denorm_exp(positive_part(std::numeric_limits<FloatType>::min_exponent - int(mantissa_bit_size) - m_e - 1));
+
+			std::cout << "denorm_exp: " << denorm_exp << ", lsb_pow: " << lsb_pow << std::endl;
+			assert(denorm_exp < my_mantissa_size);
+
+			const std::size_t shift_amount(std::max(denorm_exp, lsb_pow));
+			std::cout << "shift amount: " << shift_amount << std::endl;
+			parts = (m_e + shift_amount + exponent_bias - (denorm_exp > lsb_pow)) << mantissa_bit_size;
+			std::cout << "would write: " << std::bitset<64>((f >> shift_amount) & mantissa_mask) << std::endl;
+			parts |= ((f >> shift_amount) + round_up(f, shift_amount)) & mantissa_mask;
 
 			return value;
 		}
@@ -415,6 +417,8 @@ namespace floaxie
 			const bool should_round_up(rl & round_bit_mask);
 			std::cout << "should_round_up: " << should_round_up << std::endl;
 
+			std::cout << "before round up mantissa binary: " << std::bitset<64>(m_f) << std::endl;
+
 			if (should_round_up)
 			{
 				if (m_f < std::numeric_limits<diy_fp::mantissa_storage_type>::max())
@@ -428,11 +432,13 @@ namespace floaxie
 					++m_e;
 				}
 
+				std::cout << "before epsilon mantissa binary:  " << std::bitset<64>(m_f) << std::endl;
+
 				const mantissa_storage_type epsilon_bit_mask(0x1ul << (bit_size<mantissa_storage_type>() - 2));
-				m_f |= bool(rl & epsilon_bit_mask); // copy '1' from next-to-round bit to ulp to move value from middle after rounding
+				m_f |= bool(rl & epsilon_bit_mask) && !shift_count; // copy '1' from next-to-round bit to ulp to move value from middle after rounding
 			}
 
-			std::cout << "final mantissa binary: " << std::bitset<64>(m_f) << std::endl;
+			std::cout << "final mantissa binary:           " << std::bitset<64>(m_f) << std::endl;
 
 			m_e += rhs.m_e + 64 - static_cast<int>(shift_count);
 

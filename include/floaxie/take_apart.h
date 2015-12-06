@@ -150,6 +150,11 @@ namespace floaxie
 			}
 		}
 
+		if (dot_left_margin != leading_zeros_cnt)
+		{
+			dot_left_margin = leading_zeros_cnt;
+		}
+
 		if (exp_len > 3)
 		{
 			*str_end = str;

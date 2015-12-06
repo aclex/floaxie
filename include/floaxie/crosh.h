@@ -239,6 +239,7 @@ namespace floaxie
 	{
 		std::cout << "buffer: " << buffer << std::endl;
 		std::cout << "len: " << len << std::endl;
+		std::cout << "initial K: " << K << std::endl;
 		diy_fp w;
 		const int kappa(digit_decomp(w, buffer, len));
 		K += len - kappa;

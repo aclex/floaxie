@@ -25,6 +25,7 @@
 #include <string>
 #include <limits>
 #include <cstdint>
+#include <type_traits>
 
 #include <floaxie/type_punning_cast.h>
 
@@ -36,6 +37,11 @@ namespace floaxie
 		s.insert(1, 1, ' ');
 		s.insert(13, 1, ' ');
 		return s;
+	}
+
+	template<typename NumericType> constexpr typename std::make_unsigned<NumericType>::type positive_part(NumericType value)
+	{
+		return value > 0 ? value : 0;
 	}
 }
 

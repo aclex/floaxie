@@ -30,14 +30,8 @@
 #include <algorithm>
 
 #include <floaxie/static_pow.h>
+#include <floaxie/utility.h>
 
-namespace
-{
-	constexpr unsigned int positive_part(int value)
-	{
-		return value > 0 ? value : 0;
-	}
-}
 
 namespace floaxie
 {
