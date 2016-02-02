@@ -25,13 +25,14 @@
 #include <floaxie/static_pow.h>
 #include <floaxie/k_comp.h>
 #include <floaxie/cached_power.h>
+#include <floaxie/bit_ops.h>
 
 #include <iostream>
 #include <bitset>
 
 namespace floaxie
 {
-	constexpr std::size_t decimal_q(diy_fp::bit_size<diy_fp::mantissa_storage_type>() * lg_2);
+	constexpr std::size_t decimal_q(bit_size<diy_fp::mantissa_storage_type>() * lg_2);
 
 	inline char calculate_fraction_4(int numerator)
 	{
@@ -188,10 +189,10 @@ namespace floaxie
 		}
 
 		std::cout << "before normalization, mantissa binary: " << std::bitset<64>(f) << std::endl;
+		std::cout << "before normalization, f: " << f <<", e: "<< e << std::endl;
 
 		// normalize interim value
-		constexpr diy_fp::mantissa_storage_type msb(0x1ul << (diy_fp::bit_size<diy_fp::mantissa_storage_type>() - 1));
-		while (!(f & msb))
+		while (!highest_bit(f))
 		{
 			f <<= 1;
 			--e;
@@ -211,11 +212,13 @@ namespace floaxie
 			std::cout << "acc: " << std::bitset<8>(frac >> lsb_pow).to_string().substr(8 + e) << std::endl;
 			f |= frac >> lsb_pow;
 			std::cout << "after restore, mantissa binary: " << std::bitset<64>(f) << std::endl;
+			std::cout << "after restore, f: " << f <<", e: "<< e << std::endl;
 
 			// round correctly avoiding integer overflow, undefined behaviour, pain and suffering
 			const bool should_round_up(round_up(frac, lsb_pow));
 			if (should_round_up)
 			{
+				const auto n_f = f;
 				if (f < std::numeric_limits<diy_fp::mantissa_storage_type>::max())
 				{
 					++f;
@@ -226,8 +229,24 @@ namespace floaxie
 					++f;
 					++e;
 				}
+
+				// don't round, when it leads to consecutive rounding (which is apparently wrong)
+				auto h_f = f ^ n_f;
+				auto l = suffix_length(h_f, 1);
+				std::cout << "l: " << l << std::endl;
+				auto c_f = f | (0x1ul << (l - 1));
+				std::cout << "original f:    " << print_binary(n_f) << std::endl;
+				std::cout << "rounded f:     " << print_binary(f) << std::endl;
+				std::cout << "character f:   " << print_binary(h_f) << std::endl;
+				std::cout << "constructed f: " << print_binary(c_f) << std::endl;
+				if (l && round_up(c_f, l))
+				{
+					std::cout << "cancel rounding..." << std::endl;
+					f = n_f;
+				}
 			}
 			std::cout << "after roundup, mantissa binary: " << std::bitset<64>(f) << std::endl;
+			std::cout << "after roundup, f: " << f <<", e: "<< e << std::endl;
 		}
 
 		w = diy_fp(f, e);
@@ -235,26 +254,154 @@ namespace floaxie
 		return kappa;
 	}
 
+	inline diy_fp::mantissa_storage_type probe_w(const diy_fp& w, const diy_fp& c_rmk, const diy_fp& D) noexcept
+	{
+		diy_fp rh, rl;
+		precise_multiply4(w, c_rmk, rh, rl);
+
+		if (highest_bit(rl.mantissa()))
+		{
+			++rh;
+		}
+
+		rh.normalize();
+		assert(rh.exponent() == D.exponent());
+		std::cout << "r: " << rh << std::endl;
+		std::cout << "D: " << D << std::endl;
+		return abs_diff(rh.mantissa(), D.mantissa());
+	}
+
+	inline diy_fp precise_round(const diy_fp& rh, const diy_fp& rl, const diy_fp& D, const diy_fp& c_rmk) noexcept
+	{
+		diy_fp w(rh);
+		if (highest_bit(rl.mantissa()))
+			++w;
+
+		diy_fp wp(w), wm(w);
+		++wp;
+		--wm;
+
+		diy_fp W[3];
+		W[0] = wm;
+		W[1] = w;
+		W[2] = wp;
+
+		diy_fp::mantissa_storage_type diff[3];
+		std::cout << "Dm..." << std::endl;
+		diff[0] = probe_w(wm, c_rmk, D);
+		std::cout << "D..." << std::endl;
+		diff[1] = probe_w(w, c_rmk, D);
+		std::cout << "Dp..." << std::endl;
+		diff[2] = probe_w(wp, c_rmk, D);
+
+		std::cout << "*** Dm = " << diff[0] << ", D = " << diff[1] <<", Dp = " << diff[2] << std::endl;
+		diy_fp::mantissa_storage_type min_d = diff[0];
+		size_t min_idx = 0;
+
+		if (diff[1] <= min_d)
+		{
+			min_d = diff[1];
+			min_idx = 1;
+		}
+
+		if (diff[2] <= min_d)
+			min_idx = 2;
+
+		std::cout << "vote for index: " << min_idx << std::endl;
+		return W[min_idx];
+
+// 		if (rl.mantissa() == msb_value<diy_fp::mantissa_storage_type>())
+// 		{
+// 			std::cout << "probing: w, wp, wm" << std::endl;
+// 			if (probe_w(w, c_rmk, D))
+// 			{
+// 				std::cout << "vote for w" << std::endl;
+// 				return w;
+// 			}
+// 			else if (probe_w(wp, c_rmk, D))
+// 			{
+// 				std::cout << "vote for wp" << std::endl;
+// 				return wp;
+// 			}
+// 			else
+// 			{
+// 				probe_w(wm, c_rmk, D); // FIXME
+// 				std::cout << "vote for wm" << std::endl;
+// 				return wm;
+// 			}
+// 		}
+// 		else if (rl.mantissa() < msb_value<diy_fp::mantissa_storage_type>())
+// 		{
+// 			std::cout << "probing: wm, w, wp" << std::endl;
+// 			if (probe_w(wm, c_rmk, D))
+// 			{
+// 				std::cout << "vote for wm" << std::endl;
+// 				return wm;
+// 			}
+// 			else if (probe_w(w, c_rmk, D))
+// 			{
+// 				std::cout << "vote for w" << std::endl;
+// 				return w;
+// 			}
+// 			else
+// 			{
+// 				probe_w(wp, c_rmk, D); // FIXME
+// 				std::cout << "vote for wp" << std::endl;
+// 				return wp;
+// 			}
+// 		}
+// 		else
+// 		{
+// 			std::cout << "probing: wp, w, wm" << std::endl;
+// 			if (probe_w(wp, c_rmk, D))
+// 			{
+// 				std::cout << "vote for wp" << std::endl;
+// 				return wp;
+// 			}
+// 			else if (probe_w(w, c_rmk, D))
+// 			{
+// 				std::cout << "vote for w" << std::endl;
+// 				return w;
+// 			}
+// 			else
+// 			{
+// 				probe_w(wm, c_rmk, D); // FIXME
+// 				std::cout << "vote for wm" << std::endl;
+// 				return wm;
+// 			}
+// 		}
+	}
+
 	template<typename FloatType> FloatType crosh(const char* buffer, int len, int K)
 	{
 		std::cout << "buffer: " << buffer << std::endl;
 		std::cout << "len: " << len << std::endl;
 		std::cout << "initial K: " << K << std::endl;
-		diy_fp w;
-		const int kappa(digit_decomp(w, buffer, len));
+		diy_fp D, w;
+		const int kappa(digit_decomp(D, buffer, len));
 		K += len - kappa;
 // 		K = -18;
 		std::cout << "K: " << K << std::endl;
 
 		if (K)
 		{
-			const diy_fp& c_mk(cached_power(K));
+			const diy_fp& c_mk(cached_power(K)), c_rmk(cached_power(-K));
 			std::cout << "c_mk: " << c_mk << std::endl;
-			std::cout << "wp: " << w << std::endl;
+			std::cout << "D: " << D << std::endl;
 // 			w *= c_mk;
-			w.precise_multiply2(c_mk);
-			std::cout << "wr: " << w << std::endl;
+// 			D.precise_multiply2(c_mk);
+			diy_fp rh, rl;
+			precise_multiply4(D, c_mk, rh, rl);
+			std::cout << "~w: " << rh << std::endl;
+			w = precise_round(rh, rl, D, c_rmk);
+			std::cout << "w:  " << w << std::endl;
+			w.normalize();
+			std::cout << "wn: " << w << std::endl;
 // 			w.normalize();
+		}
+		else
+		{
+			w = D;
 		}
 
 		return static_cast<FloatType>(w);

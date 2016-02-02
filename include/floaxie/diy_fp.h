@@ -33,19 +33,13 @@
 #include <iostream>
 #include <bitset>
 
+#include <floaxie/bit_ops.h>
 #include <floaxie/utility.h>
 
 namespace floaxie
 {
-	template<typename NumericType> inline bool round_up(NumericType last_bits, std::size_t lsb_pow)
-	{
-		const NumericType round_bit(0x1ul << (lsb_pow - 1));
-		const NumericType check_mask((round_bit << 2) - 1);
-
-		std::cout << "round_bit: " << bool(last_bits & round_bit) << std::endl;
-
-		return (last_bits & round_bit) && ((last_bits & check_mask) > round_bit);
-	}
+	class diy_fp;
+	void precise_multiply4(const diy_fp& lhs, const diy_fp& rhs, diy_fp& rh, diy_fp& rl) noexcept;
 
 	class diy_fp
 	{
@@ -53,18 +47,7 @@ namespace floaxie
 		typedef std::uint64_t mantissa_storage_type;
 		typedef int exponent_storage_type;
 
-		template<typename NumericType> static constexpr std::size_t bit_size()
-		{
-			return sizeof(NumericType) * std::numeric_limits<unsigned char>::digits;
-		}
-
 	private:
-
-		template<typename NumericType> static constexpr mantissa_storage_type msb_value()
-		{
-			return 0x1ul << (bit_size<NumericType>() - 1);
-		}
-
 		template<typename NumericType> static constexpr mantissa_storage_type max_integer_value()
 		{
 			return msb_value<NumericType>() + (msb_value<NumericType>() - 1);
@@ -164,7 +147,7 @@ namespace floaxie
 			const auto f(m_f);
 
 			std::cout << "my_mantissa_size: " << my_mantissa_size <<", theirs mantissa size: " << mantissa_bit_size << std::endl;
-			std::cout << "f: " << std::bitset<64>(f) << std::endl;
+			std::cout << "f: " << print_double_presentation(f) << std::endl;
 // 			std::cout << "mask: " << std::bitset<64>(mantissa_mask) << std::endl;
 
 			if (m_e >= std::numeric_limits<FloatType>::max_exponent)
@@ -216,7 +199,8 @@ namespace floaxie
 		{
 			static_assert(original_matissa_bit_width >= 0, "Mantissa bit width should be >= 0");
 
-			assert(!is_normalized());
+			if (is_normalized())
+				return 0;
 
 			const auto initial_e = m_e;
 
@@ -237,7 +221,15 @@ namespace floaxie
 
 		std::size_t normalize() noexcept
 		{
-			return normalize<std::numeric_limits<double>::digits>();
+			const auto initial_e = m_e;
+
+			while (!highest_bit(m_f))
+			{
+				m_f <<= 1;
+				m_e--;
+			}
+
+			return initial_e - m_e;
 		}
 
 		diy_fp& operator-=(const diy_fp& rhs) noexcept
@@ -573,6 +565,16 @@ namespace floaxie
 			return temp;
 		}
 
+		bool operator==(const diy_fp& d) const noexcept
+		{
+			return m_f == d.m_f && m_e == d.m_e;
+		}
+
+		bool operator!=(const diy_fp& d) const noexcept
+		{
+			return !operator==(d);
+		}
+
 		template<typename FloatType> static std::pair<diy_fp, diy_fp> boundaries(FloatType d) noexcept
 		{
 			static_assert(std::numeric_limits<FloatType>::is_iec559, "Only IEEE-754 floating point types are supported");
@@ -611,14 +613,49 @@ namespace floaxie
 
 		template<typename Ch, typename Alloc> friend std::basic_ostream<Ch, Alloc>& operator<<(std::basic_ostream<Ch, Alloc>& os, const diy_fp& v)
 		{
-			os << "(f = " << v.m_f << ", e = " << v.m_e << ')';
+			os << "(f = " << std::bitset<64>(v.m_f) << ", e = " << v.m_e << ')';
 			return os;
 		}
 
 	private:
+		friend void precise_multiply4(const diy_fp& lhs, const diy_fp& rhs, diy_fp& rh, diy_fp& rl) noexcept;
+
 		mantissa_storage_type m_f;
 		exponent_storage_type m_e;
 	};
+
+	inline void precise_multiply4(const diy_fp& lhs, const diy_fp& rhs, diy_fp& rh, diy_fp& rl) noexcept
+	{
+		std::cout << "precise_multiply4" << std::endl;
+		std::cout << "lhs: " << lhs << std::endl;
+		std::cout << "rhs: " << rhs << std::endl;
+		constexpr auto mask_32 = 0xffffffff;
+
+		const diy_fp::mantissa_storage_type a = lhs.m_f >> 32;
+		const diy_fp::mantissa_storage_type b = lhs.m_f & mask_32;
+		const diy_fp::mantissa_storage_type c = rhs.m_f >> 32;
+		const diy_fp::mantissa_storage_type d = rhs.m_f & mask_32;
+
+		const diy_fp::mantissa_storage_type ac = a * c;
+		const diy_fp::mantissa_storage_type bc = b * c;
+		const diy_fp::mantissa_storage_type ad = a * d;
+		const diy_fp::mantissa_storage_type bd = b * d;
+
+		const diy_fp::mantissa_storage_type rz = bd;
+		const diy_fp::mantissa_storage_type ry = (rz >> 32) + (ad & mask_32) + (bc & mask_32);
+		const diy_fp::mantissa_storage_type rx = (ry >> 32) + (ad >> 32) + (bc >> 32) + (ac & mask_32);
+		const diy_fp::mantissa_storage_type rw = (rx >> 32) + (ac >> 32);
+
+		rl.m_f = ((ry & mask_32) << 32) | (rz & mask_32);
+		rh.m_f = (((rw & mask_32) << 32) | (rx & mask_32));
+		std::cout << "round check: " << highest_bit(rl.m_f) << std::endl;
+
+		rl.m_e = lhs.m_e + rhs.m_e;
+		rh.m_e = rl.m_e + bit_size<diy_fp::mantissa_storage_type>();
+
+		std::cout << "result higher binary: " << std::bitset<64>(rh.m_f) << std::endl;
+		std::cout << "result lower binary:  " << std::bitset<64>(rl.m_f) << std::endl;
+	}
 }
 
 #endif // FLOAXIE_DIY_FP_H

@@ -28,6 +28,7 @@
 #include <type_traits>
 
 #include <floaxie/type_punning_cast.h>
+#include <floaxie/bit_ops.h>
 
 namespace floaxie
 {
@@ -39,9 +40,18 @@ namespace floaxie
 		return s;
 	}
 
-	template<typename NumericType> constexpr typename std::make_unsigned<NumericType>::type positive_part(NumericType value)
+	template<typename NumericType> std::string print_double_presentation(NumericType v)
 	{
-		return value > 0 ? value : 0;
+		auto s(std::bitset<64>(v).to_string());
+		s.insert(1, 1, ' ');
+		s.insert(54, 1, ' ');
+		s.insert(56, 1, ' ');
+		return s;
+	}
+
+	template<typename NumericType> std::string print_binary(NumericType v)
+	{
+		return std::bitset<bit_size<NumericType>()>(v).to_string();
 	}
 }
 
