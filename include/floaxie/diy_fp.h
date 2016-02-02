@@ -178,6 +178,62 @@ namespace floaxie
 			return value;
 		}
 
+		inline double to_double(bool flanking) const noexcept
+		{
+			typedef double FloatType;
+			static_assert(std::numeric_limits<FloatType>::is_iec559, "Only IEEE-754 floating point types are supported");
+
+			std::cout << "is_normalized: " << is_normalized() << std::endl;
+			assert(is_normalized());
+
+			union
+			{
+				FloatType value;
+				mantissa_storage_type parts;
+			};
+
+			constexpr auto mantissa_bit_size(std::numeric_limits<FloatType>::digits - 1); // remember hidden bit
+			constexpr mantissa_storage_type my_mantissa_size(std::numeric_limits<mantissa_storage_type>::digits);
+			constexpr mantissa_storage_type mantissa_mask(max_integer_value<FloatType>() >> (my_mantissa_size - mantissa_bit_size));
+			constexpr exponent_storage_type exponent_bias(std::numeric_limits<FloatType>::max_exponent - 1 + mantissa_bit_size);
+			constexpr std::size_t lsb_pow(my_mantissa_size - (mantissa_bit_size + 1));
+
+// 			const auto f(m_f + 1); // provoke brewing round up by 1 ulp (i.e. lead to round-to-nearest on truncation)
+			const auto f(m_f);
+
+			std::cout << "my_mantissa_size: " << my_mantissa_size <<", theirs mantissa size: " << mantissa_bit_size << std::endl;
+			std::cout << "f: " << print_double_presentation(f) << std::endl;
+// 			std::cout << "mask: " << std::bitset<64>(mantissa_mask) << std::endl;
+
+			if (m_e >= std::numeric_limits<FloatType>::max_exponent)
+			{
+				return std::numeric_limits<FloatType>::infinity();
+			}
+
+			std::cout << "exp: " << m_e << ", min_exponent: " << std::numeric_limits<FloatType>::min_exponent << std::endl;
+
+			if (m_e + int(my_mantissa_size) < std::numeric_limits<FloatType>::min_exponent - int(mantissa_bit_size))
+			{
+				return FloatType(0);
+			}
+
+// 			const std::size_t denorm_exp(positive_part(m_e + exponent_storage_type(my_mantissa_size) -
+// 					(std::numeric_limits<FloatType>::min_exponent - int(mantissa_bit_size))));
+			const std::size_t denorm_exp(positive_part(std::numeric_limits<FloatType>::min_exponent - int(mantissa_bit_size) - m_e - 1));
+
+			std::cout << "denorm_exp: " << denorm_exp << ", lsb_pow: " << lsb_pow << std::endl;
+			assert(denorm_exp < my_mantissa_size);
+
+			const std::size_t shift_amount(std::max(denorm_exp, lsb_pow));
+			std::cout << "shift amount: " << shift_amount << std::endl;
+			parts = (m_e + shift_amount + exponent_bias - (denorm_exp > lsb_pow)) << mantissa_bit_size;
+			std::cout << "would write: " << std::bitset<64>((f >> shift_amount) & mantissa_mask) << std::endl;
+			bool r_up = round_up(f, shift_amount, flanking);
+			parts |= ((f >> shift_amount) + r_up) & mantissa_mask;
+
+			return value;
+		}
+
 		constexpr mantissa_storage_type mantissa() const
 		{
 			return m_f;

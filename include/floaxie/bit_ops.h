@@ -123,6 +123,19 @@ namespace floaxie
 		return (last_bits & round_bit) && (last_bits & check_mask);
 	}
 
+	template<typename NumericType> inline bool round_up(NumericType last_bits, std::size_t lsb_pow, bool minor_vote) noexcept
+	{
+		const NumericType round_bit(0x1ul << (lsb_pow - 1));
+		const NumericType check_mask((lsb_pow + 2 <= bit_size<NumericType>()) ? ((round_bit << 2) - 1) ^ round_bit : round_bit - 1);
+
+		std::cout << "last_bits: " << std::bitset<64>(last_bits) << std::endl;
+		std::cout << "round bit exponent: " << (lsb_pow - 1) << std::endl;
+		std::cout << "round_bit: " << bool(last_bits & round_bit) << std::endl;
+
+// 		return (last_bits & round_bit || (last_bits + 1) & round_bit) && (last_bits & check_mask);
+		return (last_bits & round_bit) && ((last_bits & check_mask) || minor_vote);
+	}
+
 	template<typename NumericType> inline NumericType add_with_carry(NumericType lhs, NumericType rhs, bool& carry) noexcept
 	{
 		std::cout << "add_with_carry lhs: " << std::bitset<bit_size<NumericType>()>(lhs).to_string() << std::endl;

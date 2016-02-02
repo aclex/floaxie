@@ -75,6 +75,10 @@ array<pair<const char*, double>, 6> test_pain = {{
 	make_pair("62.5364939768271845828", 62.5364939768271845828),
 }};
 
+array<pair<const char*, double>, 1> test_pain2 = {{
+	make_pair("3.08984926168550152811e-32", 3.08984926168550152811e-32),
+}};
+
 int main(int, char**)
 {
 	cout << "s: " << test_chain[0].first << ", d: " << test_chain[0].second << endl;
