@@ -280,18 +280,19 @@ namespace floaxie
 		std::cout << "before normalization, mantissa binary: " << std::bitset<64>(f) << std::endl;
 		std::cout << "before normalization, f: " << f <<", e: "<< e << std::endl;
 
-		// normalize interim value
-		while (!highest_bit(f))
-		{
-			f <<= 1;
-			--e;
-		}
-
-		std::cout << "after normalization, mantissa binary: " << std::bitset<64>(f) << std::endl;
-		std::cout << "after normalization, f: " << f <<", e: "<< e << std::endl;
-
 		if (kappa < len)
 		{
+
+			// normalize interim value
+			while (!highest_bit(f))
+			{
+				f <<= 1;
+				--e;
+			}
+
+			std::cout << "after normalization, mantissa binary: " << std::bitset<64>(f) << std::endl;
+			std::cout << "after normalization, f: " << f <<", e: "<< e << std::endl;
+
 			assert(e >= -4);
 			const std::size_t lsb_pow(5 + e);
 
@@ -527,6 +528,7 @@ namespace floaxie
 			rc.normalize();
 			w = narrow_down(r);
 // 			w = rc;
+			std::cout << "c_mk * c_rmk: " << precise_multiply4(c_mk, c_rmk) << std::endl;
 			std::cout << "~w: " << r << std::endl;
 // 			w = precise_round(rh, rl, D, c_rmk);
 			std::cout << "w:  " << w << std::endl;
@@ -542,6 +544,7 @@ namespace floaxie
 		else
 		{
 			w = D;
+			w.normalize();
 		}
 
 // 		return static_cast<FloatType>(w);

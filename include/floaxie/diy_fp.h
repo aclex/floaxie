@@ -307,7 +307,7 @@ namespace floaxie
 		{
 			std::cout << "operator*" << std::endl;
 			std::cout << "op1: " << (*this) << std::endl;
-			std::cout << "op2: " << (*this) << std::endl;
+			std::cout << "op2: " << rhs << std::endl;
 			constexpr auto mask_32 = 0xffffffff;
 
 			const mantissa_storage_type a = m_f >> 32;
