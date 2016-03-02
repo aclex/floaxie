@@ -139,7 +139,7 @@ namespace floaxie
 		}
 	}
 
-	inline unsigned char extract_simple_fraction_4(const char* buffer, int len, bool& flanking)
+	inline unsigned char extract_simple_fraction_4(const char* buffer, int len)
 	{
 		const unsigned int num = (len > 0 ? buffer[0] - '0' : 0) * static_pow<10, 3>() +
 				(len > 1 ? buffer[1] - '0' : 0) * static_pow<10, 2>() +
@@ -152,7 +152,6 @@ namespace floaxie
 // 		const bool round_up = (frac & 0x1ul) && (len > 4 || detect_round_up_bit(num));
 		const bool round_up = (len > 4 || detect_round_up_bit(num));
 		std::cout << "round_up: " << round_up << std::endl;
-		flanking = round_up;
 		frac <<= 1;
 		frac |= round_up;
 		auto frac_str(std::bitset<8>(frac).to_string().substr(3));
@@ -209,8 +208,7 @@ namespace floaxie
 			const std::size_t lsb_pow(5 + e);
 
 			// save some more bits restoring prefix of fraction
-			bool flanking;
-			const unsigned char frac(extract_simple_fraction_4(buffer + kappa, len - kappa, flanking));
+			const unsigned char frac(extract_simple_fraction_4(buffer + kappa, len - kappa));
 
 			std::cout << "acc: " << std::bitset<8>(frac >> lsb_pow).to_string().substr(8 + e) << std::endl;
 			f |= frac >> lsb_pow;
@@ -257,7 +255,7 @@ namespace floaxie
 		return kappa;
 	}
 
-	inline std::size_t digit_decomp(diy_fp& w, const char* buffer, std::size_t len, bool& flanking)
+	inline std::size_t digit_decomp(diy_fp& w, const char* buffer, std::size_t len, accuracy& flanking)
 	{
 		diy_fp::mantissa_storage_type f(0);
 		diy_fp::exponent_storage_type e(0);
@@ -297,7 +295,7 @@ namespace floaxie
 			const std::size_t lsb_pow(5 + e);
 
 			// save some more bits restoring prefix of fraction
-			const unsigned char frac(extract_simple_fraction_4(buffer + kappa, len - kappa, flanking));
+			const unsigned char frac(extract_simple_fraction_4(buffer + kappa, len - kappa));
 
 			std::cout << "acc: " << std::bitset<8>(frac >> lsb_pow).to_string().substr(8 + e) << std::endl;
 			f |= frac >> lsb_pow;
@@ -333,10 +331,23 @@ namespace floaxie
 				{
 					std::cout << "cancel rounding..." << std::endl;
 					f = n_f;
+					flanking = frac ? more : exact;
 				}
+				else
+				{
+					flanking = less;
+				}
+			}
+			else
+			{
+				flanking = frac ? more : exact;
 			}
 			std::cout << "after roundup, mantissa binary: " << std::bitset<64>(f) << std::endl;
 			std::cout << "after roundup, f: " << f <<", e: "<< e << std::endl;
+		}
+		else
+		{
+			flanking = exact;
 		}
 
 		w = diy_fp(f, e);
@@ -496,10 +507,76 @@ namespace floaxie
 // // 		}
 // 	}
 
-	inline diy_fp narrow_down(const dword_diy_fp& v) noexcept
+	inline diy_fp narrow_down(const dword_diy_fp& v, accuracy& tail) noexcept
 	{
 		constexpr std::size_t word_width(bit_size<dword_diy_fp::mantissa_storage_type::word_type>());
+		tail = highest_bit(v.mantissa().lower()) ? less : (v.mantissa().lower() ? more : exact);
 		return diy_fp(v.mantissa().higher() + highest_bit(v.mantissa().lower()), v.exponent() + word_width);
+	}
+
+	inline accuracy extract_operand_minor_vote(accuracy flanking, accuracy exceeds) noexcept
+	{
+		std::cout << "flanking: " << flanking << std::endl;
+		std::cout << "exceeds: " << exceeds << std::endl;
+		if (flanking == exact && exceeds == exact)
+		{
+			std::cout << "operand minor vote is: " << exact << std::endl;
+			return exact;
+		}
+
+		if ((flanking == more || flanking == exact) && (exceeds == more || exceeds == exact))
+		{
+			std::cout << "operand minor vote is: " << more << std::endl;
+			return more;
+		}
+
+		if ((flanking == less || flanking == exact) && (exceeds == less || exceeds == exact))
+		{
+			std::cout << "operand minor vote is: " << less << std::endl;
+			return less;
+		}
+
+		std::cout << "operand minor vote is: " << uncertain << std::endl;
+		return uncertain;
+	}
+
+	inline accuracy extract_minor_vote(accuracy flanking, accuracy exceeds, accuracy tail) noexcept
+	{
+		std::cout << "tail: " << tail << std::endl;
+		accuracy operand_vote = extract_operand_minor_vote(flanking, exceeds);
+		if (tail == exact)
+		{
+			return operand_vote;
+		}
+		else
+		{
+			if (tail != flanking)
+			{
+				if ((tail == less && operand_vote == more) || (tail == more && operand_vote == less) || operand_vote == uncertain)
+				{
+					std::cout << "minor vote is: " << uncertain << std::endl;
+					return uncertain;
+				}
+			}
+
+			std::cout << "minor vote is: " << tail << std::endl;
+			return tail;
+		}
+	}
+
+	inline accuracy predict_uncertain_minor_vote(diy_fp D, accuracy flanking, diy_fp c_mk, accuracy exceeds, accuracy tail) noexcept
+	{
+		if (flanking == more)
+		{
+			return flanking;
+		}
+		else
+		{
+			if (tail != less)
+				return exceeds;
+			else
+				return uncertain;
+		}
 	}
 
 	template<typename FloatType> FloatType crosh(const char* buffer, int len, int K)
@@ -508,31 +585,33 @@ namespace floaxie
 		std::cout << "len: " << len << std::endl;
 		std::cout << "initial K: " << K << std::endl;
 		diy_fp D, w;
-		bool flanking(false);
+		accuracy flanking, exceeds(exact), tail(exact), minor_vote(exact);
 		const int kappa(digit_decomp(D, buffer, len, flanking));
 		K += len - kappa;
 // 		K = -18;
+		std::cout << "D: " << D << std::endl;
 		std::cout << "K: " << K << std::endl;
 
 		if (K)
 		{
 			const diy_fp& c_mk(cached_power(K)), c_rmk(cached_power(-K));
-			std::cout << "c_mk: " << c_mk << ", d: " << c_mk.mantissa() << std::endl;
-			std::cout << "D: " << D << std::endl;
+			exceeds = cached_power_exceeds(K);
+			std::cout << "c_mk: " << c_mk << ", f: " << c_mk.mantissa() << ", exceeds: " << exceeds << std::endl;
 // 			w *= c_mk;
 // 			D.precise_multiply2(c_mk);
-			diy_fp rh, rl;
+// 			diy_fp rh, rl;
 			auto r = precise_multiply4(D, c_mk);
 			r.normalize();
-			auto rc = D * c_mk;
-			rc.normalize();
-			w = narrow_down(r);
+			std::cout << "ww:  " << r << std::endl;
+// 			auto rc = D * c_mk;
+// 			rc.normalize();
+			w = narrow_down(r, tail);
 // 			w = rc;
-			std::cout << "c_mk * c_rmk: " << precise_multiply4(c_mk, c_rmk) << std::endl;
-			std::cout << "~w: " << r << std::endl;
+// 			std::cout << "c_mk * c_rmk: " << precise_multiply4(c_mk, c_rmk) << std::endl;
+// 			std::cout << "~w: " << r << std::endl;
 // 			w = precise_round(rh, rl, D, c_rmk);
 			std::cout << "w:  " << w << std::endl;
-			std::cout << "rc: " << rc << std::endl;
+// 			std::cout << "rc: " << rc << std::endl;
 // 			w.normalize();
 			std::cout << "wn: " << w << std::endl;
 // 			w.normalize();
@@ -540,6 +619,10 @@ namespace floaxie
 			diy_fp tt(0b111, -6);
 			diy_fp ttr = tt * c_mk;
 			std::cout << "residue mult: " << ttr << std::endl;
+			minor_vote = extract_minor_vote(flanking, exceeds, tail);
+			if (minor_vote == uncertain)
+				minor_vote = predict_uncertain_minor_vote(D, flanking, c_mk, exceeds, tail);
+			std::cout << "predicted minor vote: " << minor_vote << std::endl;
 		}
 		else
 		{
@@ -548,7 +631,7 @@ namespace floaxie
 		}
 
 // 		return static_cast<FloatType>(w);
-		return w.to_double(flanking);
+		return w.to_double(minor_vote);
 	}
 }
 

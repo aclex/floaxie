@@ -35,6 +35,7 @@
 
 #include <floaxie/bit_ops.h>
 #include <floaxie/utility.h>
+#include <floaxie/accuracy.h>
 
 namespace floaxie
 {
@@ -178,7 +179,7 @@ namespace floaxie
 			return value;
 		}
 
-		inline double to_double(bool flanking) const noexcept
+		inline double to_double(accuracy minor_vote) const noexcept
 		{
 			typedef double FloatType;
 			static_assert(std::numeric_limits<FloatType>::is_iec559, "Only IEEE-754 floating point types are supported");
@@ -228,7 +229,7 @@ namespace floaxie
 			std::cout << "shift amount: " << shift_amount << std::endl;
 			parts = (m_e + shift_amount + exponent_bias - (denorm_exp > lsb_pow)) << mantissa_bit_size;
 			std::cout << "would write: " << std::bitset<64>((f >> shift_amount) & mantissa_mask) << std::endl;
-			bool r_up = round_up(f, shift_amount, flanking);
+			bool r_up = round_up(f, shift_amount, minor_vote);
 			parts |= ((f >> shift_amount) + r_up) & mantissa_mask;
 
 			return value;
