@@ -29,7 +29,12 @@ int main(int, char**)
 
 		if (ref_value != pi || ref_value != ret)
 		{
-			cerr << "not equal [i = " << i << "] " << "pi: " << pi << ", buffer: " << buffer << ", ref_value: " << ref_value << ", ret: " << ret << endl;
+			cerr << "not equal [i = " << i << "] "
+			<< "pi: " << pi
+			<< ", buffer: "
+			<< buffer << ", ref_value: "
+			<< ref_value << ", ret: "
+			<< ret << endl;
 			return -1;
 		}
 	}
