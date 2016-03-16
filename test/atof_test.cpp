@@ -36,7 +36,7 @@ array<pair<const char*, double>, 21> test_chain = {{
 	make_pair("0.3932922657273", 0.3932922657273)
 }};
 
-array<pair<const char*, std::uint64_t>, 29> test_chain2 = {{
+array<pair<const char*, std::uint64_t>, 30> test_chain2 = {{
 	make_pair("18014398509481993", 0x4350000000000002),
 	make_pair("0.9199", 0x3fed6fd21ff2e48f),
 	make_pair("1.89", 0x3ffe3d70a3d70a3d),
@@ -65,7 +65,8 @@ array<pair<const char*, std::uint64_t>, 29> test_chain2 = {{
 	make_pair("6.95255e118", 0x589b92112776983c),
 	make_pair("3.68715e-227", 0x10ebf37577860131),
 	make_pair("4.30583e92", 0x532a6c122de8c02f),
-	make_pair("3.01442e49", 0x4a34a020ad69249c)
+	make_pair("3.01442e49", 0x4a34a020ad69249c),
+	make_pair("1.6564e-174", 0x1bda382a65a69de1)
 }};
 
 array<pair<const char*, double>, 6> test_pain = {{

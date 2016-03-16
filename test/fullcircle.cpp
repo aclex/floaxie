@@ -20,6 +20,8 @@ int main(int, char**)
 	default_random_engine gen(rd());
 	uniform_real_distribution<> dis(0, 2);
 
+	size_t fault_number = 0;
+
 	for (size_t i = 0; i < short_numbers_length; ++i)
 	{
 		double pi = short_numbers[i];
@@ -35,9 +37,11 @@ int main(int, char**)
 			<< buffer << ", ref_value: "
 			<< ref_value << ", ret: "
 			<< ret << endl;
-			return -1;
+			++fault_number;
+// 			return -1;
 		}
 	}
+	cout << "crosh failed " << fault_number << " times out of " << short_numbers_length << endl;
 
 	return 0;
 }
