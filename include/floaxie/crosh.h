@@ -572,6 +572,15 @@ namespace floaxie
 		}
 		else
 		{
+			if (flanking == exact)
+			{
+				if ((tail == less && exceeds == more) || (tail == more && exceeds == less))
+				{
+					std::cout << "minor vote is: " << uncertain << std::endl;
+					return uncertain;
+				}
+			}
+
 			if (tail != less)
 				return exceeds;
 			else

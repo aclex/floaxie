@@ -137,6 +137,7 @@ namespace floaxie
 		std::cout << "round_bit: " << bool(last_bits & round_bit) << std::endl;
 		std::cout << "parity_bit: " << bool(last_bits & parity_bit) << std::endl;
 		std::cout << "trailing bits: " << bool(last_bits & trailing_bits_mask) << std::endl;
+		std::cout << "minor vote: " << minor_vote << std::endl;
 
 
 // 		return (last_bits & round_bit || (last_bits + 1) & round_bit) && (last_bits & check_mask);
