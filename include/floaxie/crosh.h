@@ -331,16 +331,16 @@ namespace floaxie
 				{
 					std::cout << "cancel rounding..." << std::endl;
 					f = n_f;
-					flanking = frac ? more : exact;
+					flanking = frac ? less : exact;
 				}
 				else
 				{
-					flanking = less;
+					flanking = more;
 				}
 			}
 			else
 			{
-				flanking = frac ? more : exact;
+				flanking = frac ? less : exact;
 			}
 			std::cout << "after roundup, mantissa binary: " << std::bitset<64>(f) << std::endl;
 			std::cout << "after roundup, f: " << f <<", e: "<< e << std::endl;
@@ -510,11 +510,40 @@ namespace floaxie
 	inline diy_fp narrow_down(const dword_diy_fp& v, accuracy& tail) noexcept
 	{
 		constexpr std::size_t word_width(bit_size<dword_diy_fp::mantissa_storage_type::word_type>());
-		tail = highest_bit(v.mantissa().lower()) ? less : (v.mantissa().lower() ? more : exact);
+		if (highest_bit(v.mantissa().lower()))
+		{
+			if (!nth_bit(v.mantissa().lower(), word_width - 2))
+			{
+				tail = more;
+			}
+			else
+			{
+				tail = uncertain;
+			}
+		}
+		else
+		{
+			if (v.mantissa().lower())
+			{
+				if (nth_bit(v.mantissa().lower(), word_width - 2))
+				{
+					tail = less;
+				}
+				else
+				{
+					tail = uncertain;
+				}
+			}
+			else
+			{
+				tail = exact;
+			}
+		}
+
 		return diy_fp(v.mantissa().higher() + highest_bit(v.mantissa().lower()), v.exponent() + word_width);
 	}
 
-	inline accuracy extract_operand_minor_vote(accuracy flanking, accuracy exceeds) noexcept
+	inline accuracy extract_operand_position(accuracy flanking, accuracy exceeds) noexcept
 	{
 		std::cout << "flanking: " << flanking << std::endl;
 		std::cout << "exceeds: " << exceeds << std::endl;
@@ -536,30 +565,34 @@ namespace floaxie
 			return less;
 		}
 
-		std::cout << "operand minor vote is: " << uncertain << std::endl;
-		return uncertain;
+		std::cout << "operand minor vote is: " << flanking << std::endl;
+		return flanking;
 	}
 
-	inline accuracy extract_minor_vote(accuracy flanking, accuracy exceeds, accuracy tail) noexcept
+	inline bool check_pure_uncertainty(accuracy flanking, accuracy exceeds, accuracy tail) noexcept
+	{
+		return ((flanking == less || exceeds == less || tail == less) &&
+			(flanking == more || exceeds == more || tail == more));
+	}
+
+	inline accuracy predict_result_position(accuracy flanking, accuracy exceeds, accuracy tail) noexcept
 	{
 		std::cout << "tail: " << tail << std::endl;
-		accuracy operand_vote = extract_operand_minor_vote(flanking, exceeds);
+		accuracy operand_vote = extract_operand_position(flanking, exceeds);
+		if (check_pure_uncertainty(flanking, exceeds, tail))
+		{
+			std::cout << "returning uncertain" << std::endl;
+			return uncertain;
+		}
+
 		if (tail == exact)
 		{
+			std::cout << "result position prediction (operand): " << operand_vote << std::endl;
 			return operand_vote;
 		}
 		else
 		{
-			if (tail != flanking)
-			{
-				if ((tail == less && operand_vote == more) || (tail == more && operand_vote == less) || operand_vote == uncertain)
-				{
-					std::cout << "minor vote is: " << uncertain << std::endl;
-					return uncertain;
-				}
-			}
-
-			std::cout << "minor vote is: " << tail << std::endl;
+			std::cout << "result position prediction (tail): " << tail << std::endl;
 			return tail;
 		}
 	}
@@ -628,9 +661,9 @@ namespace floaxie
 			diy_fp tt(0b111, -6);
 			diy_fp ttr = tt * c_mk;
 			std::cout << "residue mult: " << ttr << std::endl;
-			minor_vote = extract_minor_vote(flanking, exceeds, tail);
-			if (minor_vote == uncertain)
-				minor_vote = predict_uncertain_minor_vote(D, flanking, c_mk, exceeds, tail);
+			minor_vote = predict_result_position(flanking, exceeds, tail);
+// 			if (minor_vote == uncertain)
+// 				minor_vote = predict_uncertain_minor_vote(D, flanking, c_mk, exceeds, tail);
 			std::cout << "predicted minor vote: " << minor_vote << std::endl;
 		}
 		else

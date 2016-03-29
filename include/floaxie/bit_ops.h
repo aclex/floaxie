@@ -125,7 +125,7 @@ namespace floaxie
 		return (last_bits & round_bit) && (last_bits & check_mask);
 	}
 
-	template<typename NumericType> inline bool round_up(NumericType last_bits, std::size_t lsb_pow, accuracy minor_vote) noexcept
+	template<typename NumericType> inline bool round_up(NumericType last_bits, std::size_t lsb_pow, accuracy result_side) noexcept
 	{
 		const NumericType round_bit(0x1ul << (lsb_pow - 1));
 		const NumericType parity_bit(0x1ul << lsb_pow);
@@ -137,11 +137,13 @@ namespace floaxie
 		std::cout << "round_bit: " << bool(last_bits & round_bit) << std::endl;
 		std::cout << "parity_bit: " << bool(last_bits & parity_bit) << std::endl;
 		std::cout << "trailing bits: " << bool(last_bits & trailing_bits_mask) << std::endl;
-		std::cout << "minor vote: " << minor_vote << std::endl;
+		std::cout << "result vs. original side: " << result_side << std::endl;
 
 
 // 		return (last_bits & round_bit || (last_bits + 1) & round_bit) && (last_bits & check_mask);
-		return (last_bits & round_bit) && ((last_bits & trailing_bits_mask) || ((last_bits & parity_bit) && minor_vote != less) || minor_vote == more);
+		return (last_bits & round_bit) && ((last_bits & trailing_bits_mask) ||
+					((last_bits & parity_bit) && result_side != more) ||
+					result_side == less);
 	}
 
 	template<typename NumericType> inline NumericType add_with_carry(NumericType lhs, NumericType rhs, bool& carry) noexcept
