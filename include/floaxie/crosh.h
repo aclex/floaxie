@@ -510,35 +510,7 @@ namespace floaxie
 	inline diy_fp narrow_down(const dword_diy_fp& v, accuracy& tail) noexcept
 	{
 		constexpr std::size_t word_width(bit_size<dword_diy_fp::mantissa_storage_type::word_type>());
-		if (highest_bit(v.mantissa().lower()))
-		{
-			if (!nth_bit(v.mantissa().lower(), word_width - 2))
-			{
-				tail = more;
-			}
-			else
-			{
-				tail = uncertain;
-			}
-		}
-		else
-		{
-			if (v.mantissa().lower())
-			{
-				if (nth_bit(v.mantissa().lower(), word_width - 2))
-				{
-					tail = less;
-				}
-				else
-				{
-					tail = uncertain;
-				}
-			}
-			else
-			{
-				tail = exact;
-			}
-		}
+		tail = highest_bit(v.mantissa().lower()) ? more : (v.mantissa().lower() ? less : exact);
 
 		return diy_fp(v.mantissa().higher() + highest_bit(v.mantissa().lower()), v.exponent() + word_width);
 	}
@@ -565,8 +537,8 @@ namespace floaxie
 			return less;
 		}
 
-		std::cout << "operand minor vote is: " << flanking << std::endl;
-		return flanking;
+		std::cout << "operand minor vote is: " << uncertain << std::endl;
+		return uncertain;
 	}
 
 	inline bool check_pure_uncertainty(accuracy flanking, accuracy exceeds, accuracy tail) noexcept
@@ -579,9 +551,10 @@ namespace floaxie
 	{
 		std::cout << "tail: " << tail << std::endl;
 		accuracy operand_vote = extract_operand_position(flanking, exceeds);
+
 		if (check_pure_uncertainty(flanking, exceeds, tail))
 		{
-			std::cout << "returning uncertain" << std::endl;
+			std::cout << "minor vote is (pure): " << uncertain << std::endl;
 			return uncertain;
 		}
 
@@ -594,12 +567,13 @@ namespace floaxie
 		{
 			std::cout << "result position prediction (tail): " << tail << std::endl;
 			return tail;
+
 		}
 	}
 
 	inline accuracy predict_uncertain_minor_vote(diy_fp D, accuracy flanking, diy_fp c_mk, accuracy exceeds, accuracy tail) noexcept
 	{
-		if (flanking == more)
+		if (flanking == less)
 		{
 			return flanking;
 		}
@@ -607,14 +581,14 @@ namespace floaxie
 		{
 			if (flanking == exact)
 			{
-				if ((tail == less && exceeds == more) || (tail == more && exceeds == less))
+				if ((tail == more && exceeds == less) || (tail == less && exceeds == more))
 				{
 					std::cout << "minor vote is: " << uncertain << std::endl;
 					return uncertain;
 				}
 			}
 
-			if (tail != less)
+			if (tail != more)
 				return exceeds;
 			else
 				return uncertain;
@@ -662,8 +636,8 @@ namespace floaxie
 			diy_fp ttr = tt * c_mk;
 			std::cout << "residue mult: " << ttr << std::endl;
 			minor_vote = predict_result_position(flanking, exceeds, tail);
-// 			if (minor_vote == uncertain)
-// 				minor_vote = predict_uncertain_minor_vote(D, flanking, c_mk, exceeds, tail);
+			if (minor_vote == uncertain)
+				minor_vote = predict_uncertain_minor_vote(D, flanking, c_mk, exceeds, tail);
 			std::cout << "predicted minor vote: " << minor_vote << std::endl;
 		}
 		else
