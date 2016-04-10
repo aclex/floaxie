@@ -47,7 +47,7 @@ namespace floaxie
 
 		template<typename NumericType> static constexpr mantissa_storage_type msb_value()
 		{
-			return 0x1ul << (bit_size<NumericType>() - 1);
+			return mantissa_storage_type(1) << (bit_size<NumericType>() - 1);
 		}
 
 		template<typename NumericType> static constexpr mantissa_storage_type max_integer_value()
@@ -55,15 +55,15 @@ namespace floaxie
 			return msb_value<NumericType>() + (msb_value<NumericType>() - 1);
 		}
 
-		template<std::size_t bit_size> static constexpr mantissa_storage_type hidden_bit()
+		template<std::size_t bit_pos> static constexpr mantissa_storage_type hidden_bit()
 		{
-			return 0x1ul << bit_size;
+			return mantissa_storage_type(1) << bit_pos;
 		}
 
 		template<typename FloatType> static constexpr mantissa_storage_type hidden_bit()
 		{
 			static_assert(std::numeric_limits<FloatType>::is_iec559, "Only IEEE-754 floating point types are supported");
-			return 0x1ul << (std::numeric_limits<FloatType>::digits - 1);
+			return mantissa_storage_type(1) << (std::numeric_limits<FloatType>::digits - 1);
 		}
 
 	public:
@@ -123,14 +123,14 @@ namespace floaxie
 
 			assert(!is_normalized());
 
-			while (!(m_f & hidden_bit<original_matissa_bit_width>()))
+			while (!(m_f & hidden_bit<original_matissa_bit_width - 1>()))
 			{
 				m_f <<= 1;
 				m_e--;
 			}
 
 			constexpr mantissa_storage_type my_mantissa_size(std::numeric_limits<mantissa_storage_type>::digits);
-			constexpr mantissa_storage_type e_diff = my_mantissa_size - original_matissa_bit_width - 1;
+			constexpr mantissa_storage_type e_diff = my_mantissa_size - original_matissa_bit_width;
 
 			m_f <<= e_diff;
 			m_e -= e_diff;
@@ -155,6 +155,7 @@ namespace floaxie
 		{
 			constexpr auto mask_32 = 0xffffffff;
 
+			// TODO: don't rely on 64 bit size of mantissa_storage_type
 			const mantissa_storage_type a = m_f >> 32;
 			const mantissa_storage_type b = m_f & mask_32;
 			const mantissa_storage_type c = rhs.m_f >> 32;
@@ -217,7 +218,8 @@ namespace floaxie
 			pl.m_f += 1;
 
 			pl.m_e  -= 1;
-			pl.normalize<std::numeric_limits<FloatType>::digits>(); // as we increase precision of IEEE-754 type by 1
+
+			pl.normalize<std::numeric_limits<FloatType>::digits + 1>(); // as we've just increased precision of IEEE-754 type by 1
 
 			if (mi.m_f == hidden_bit<FloatType>())
 			{
