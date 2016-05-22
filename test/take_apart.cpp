@@ -8,6 +8,8 @@ using namespace floaxie;
 
 bool check_integer()
 {
+	std::cout << "check_integer" << std::endl;
+
 	bool ret = false;
 	char buffer[max_buffer_length];
 	const char* str_end;
@@ -37,6 +39,8 @@ bool check_integer()
 
 bool check_decimal_fraction()
 {
+	std::cout << "check_decimal_fraction" << std::endl;
+
 	bool ret = false;
 	char buffer[max_buffer_length];
 	const char* str_end;
@@ -78,6 +82,8 @@ bool check_decimal_fraction()
 
 bool check_exponent()
 {
+	std::cout << "check_exponent" << std::endl;
+
 	bool ret = false;
 	char buffer[max_buffer_length];
 	const char* str_end;

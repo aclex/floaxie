@@ -23,6 +23,8 @@
 
 #include <limits>
 
+#include <iostream>
+
 namespace floaxie
 {
 	namespace detail
@@ -150,7 +152,8 @@ namespace floaxie
 			}
 		}
 
-		if (dot_left_margin != leading_zeros_cnt)
+		if (e_pos == std::numeric_limits<std::size_t>::max() &&
+			dot_left_margin != leading_zeros_cnt)
 		{
 			dot_left_margin = leading_zeros_cnt;
 		}
