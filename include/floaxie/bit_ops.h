@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Alexey Chernov <4ernov@gmail.com>
+ * Copyright 2015, 2016 Alexey Chernov <4ernov@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,8 @@
 #include <iostream>
 #include <bitset>
 
-#include <floaxie/accuracy.h>
+// #include <floaxie/accuracy.h>
+#include <floaxie/integer_of_size.h>
 
 namespace floaxie
 {
@@ -42,54 +43,59 @@ namespace floaxie
 		return sizeof(NumericType) * std::numeric_limits<unsigned char>::digits;
 	}
 
-	template<typename NumericType> constexpr std::uintmax_t msb_value() noexcept
+	template<typename NumericType> constexpr NumericType raised_bit(std::size_t power)
 	{
-		return 0x1ul << (bit_size<NumericType>() - 1);
+		assert(power < bit_size<NumericType>());
+		return NumericType(1) << power;
 	}
 
-	template<typename NumericType> constexpr std::uintmax_t max_integer_value() noexcept
+	template<typename FloatType,
+	typename NumericType =  typename integer_of_size<sizeof(FloatType)>::type>
+	constexpr NumericType msb_value() noexcept
 	{
-		return msb_value<NumericType>() + (msb_value<NumericType>() - 1);
+		return raised_bit<NumericType>(bit_size<NumericType>() - 1);
 	}
 
-	template<std::size_t number> constexpr std::uintmax_t select_one_bit()
+	template<typename FloatType,
+	typename NumericType = typename integer_of_size<sizeof(FloatType)>::type>
+	constexpr NumericType max_integer_value() noexcept
 	{
-		return 0x1ul << number;
+		return std::numeric_limits<NumericType>::max();
 	}
 
-	template<typename NumericType> constexpr bool nth_bit(NumericType value, std::size_t n) noexcept
+	template<typename NumericType> constexpr bool nth_bit(NumericType value, std::size_t power) noexcept
 	{
-		return value & (std::uintmax_t(1) << n);
+		return value & raised_bit<NumericType>(power);
 	}
 
 	template<typename NumericType> constexpr bool highest_bit(NumericType value) noexcept
 	{
-		return value & select_one_bit<bit_size<NumericType>() - 1>();
+		return nth_bit(value, bit_size<NumericType>() - 1);
 	}
 
-	constexpr std::uintmax_t mask(std::size_t n) noexcept
+	template<typename NumericType> constexpr NumericType mask(std::size_t n) noexcept
 	{
-		return n < bit_size<std::uintmax_t>() ? (std::uintmax_t(1) << n) - 1 : max_integer_value<std::uintmax_t>();
+		return n < bit_size<NumericType>() ? raised_bit<NumericType>(n) - 1 : std::numeric_limits<NumericType>::max();
 	}
 
-	constexpr std::uintmax_t mask(std::size_t begin_bit_no, std::size_t end_bit_no) noexcept
+	template<typename NumericType> constexpr NumericType mask(std::size_t begin_bit_no, std::size_t end_bit_no) noexcept
 	{
-		return mask(end_bit_no) ^ mask(begin_bit_no);
+		return mask<NumericType>(end_bit_no) ^ mask<NumericType>(begin_bit_no);
 	}
 
 	template<typename NumericType> constexpr NumericType peek(NumericType value, std::size_t begin_bit_no, std::size_t end_bit_no) noexcept
 	{
-		return (value & mask(begin_bit_no, end_bit_no)) >> begin_bit_no;
+		return (value & mask<NumericType>(begin_bit_no, end_bit_no)) >> begin_bit_no;
 	}
 
-	template<typename NumericType> constexpr std::uintmax_t prefix(NumericType value, std::size_t n) noexcept
+	template<typename NumericType> constexpr NumericType prefix(NumericType value, std::size_t n) noexcept
 	{
 		return n != bit_size<NumericType>() ? value >> (bit_size<NumericType>() - n) : value;
 	}
 
-	template<typename NumericType> constexpr std::uintmax_t suffix(NumericType value, std::size_t n) noexcept
+	template<typename NumericType> constexpr NumericType suffix(NumericType value, std::size_t n) noexcept
 	{
-		return n != bit_size<NumericType>() ? value & mask(n) : value;
+		return n != bit_size<NumericType>() ? value & mask<NumericType>(n) : value;
 	}
 
 	template<typename NumericType> inline std::size_t suffix_length(NumericType value, bool sample) noexcept
@@ -114,36 +120,35 @@ namespace floaxie
 		return a > b ? a - b : b - a;
 	}
 
-	template<typename NumericType> inline bool round_up(NumericType last_bits, std::size_t lsb_pow) noexcept
+	template<typename NumericType> inline bool round_up_safe(NumericType last_bits, std::size_t round_to_power, bool* accurate) noexcept
 	{
-		const NumericType round_bit(0x1ul << (lsb_pow - 1));
-		const NumericType check_mask((lsb_pow + 2 <= bit_size<NumericType>()) ? ((round_bit << 2) - 1) ^ round_bit : round_bit - 1);
-
-		std::cout << "round_bit: " << bool(last_bits & round_bit) << std::endl;
-
-// 		return (last_bits & round_bit || (last_bits + 1) & round_bit) && (last_bits & check_mask);
-		return (last_bits & round_bit) && (last_bits & check_mask);
-	}
-
-	template<typename NumericType> inline bool round_up(NumericType last_bits, std::size_t lsb_pow, accuracy result_side) noexcept
-	{
-		const NumericType round_bit(0x1ul << (lsb_pow - 1));
-		const NumericType parity_bit(0x1ul << lsb_pow);
+		const NumericType round_bit(0x1ul << (round_to_power - 1));
+		const NumericType parity_bit(0x1ul << round_to_power );
 		const NumericType trailing_bits_mask(round_bit - 1);
 // 		const NumericType check_mask((lsb_pow + 2 <= bit_size<NumericType>()) ? ((round_bit << 2) - 1) ^ round_bit : round_bit - 1);
+		*accurate = suffix(last_bits, round_to_power - 1) != round_bit;
 
 		std::cout << "last_bits: " << std::bitset<64>(last_bits) << std::endl;
-		std::cout << "round bit exponent: " << (lsb_pow - 1) << std::endl;
+		std::cout << "round bit exponent: " << ( round_to_power - 1) << std::endl;
 		std::cout << "round_bit: " << bool(last_bits & round_bit) << std::endl;
 		std::cout << "parity_bit: " << bool(last_bits & parity_bit) << std::endl;
 		std::cout << "trailing bits: " << bool(last_bits & trailing_bits_mask) << std::endl;
-		std::cout << "result vs. original side: " << result_side << std::endl;
 
+		return (last_bits & round_bit) && ((last_bits & trailing_bits_mask) || (last_bits & parity_bit));
+	}
 
-// 		return (last_bits & round_bit || (last_bits + 1) & round_bit) && (last_bits & check_mask);
-		return (last_bits & round_bit) && ((last_bits & trailing_bits_mask) ||
-					((last_bits & parity_bit) && result_side != more) ||
-					result_side == less);
+	template<typename NumericType> inline bool round_up_fast(NumericType last_bits, std::size_t round_to_power, bool* accurate) noexcept
+	{
+		const NumericType round_bit(raised_bit<NumericType>(round_to_power - 1));
+		const NumericType check_mask(mask<NumericType>(round_to_power + 1) ^ round_bit);
+		*accurate = suffix(last_bits, round_to_power) != round_bit;
+
+		return (last_bits & round_bit) && (last_bits & check_mask);
+	}
+
+	template<typename NumericType> inline bool round_up(NumericType last_bits, std::size_t round_to_power, bool* accurate) noexcept
+	{
+		return round_up_fast(last_bits, round_to_power, accurate);
 	}
 
 	template<typename NumericType> inline NumericType add_with_carry(NumericType lhs, NumericType rhs, bool& carry) noexcept

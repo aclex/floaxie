@@ -115,7 +115,7 @@ namespace floaxie
 			if (higher_carry)
 			{
 				lhs.m_f >>= 1;
-				higher = lhs.m_f.higher() | select_one_bit<bit_size<typename mantissa_storage_type::word_type>() - 1>();
+				higher = lhs.m_f.higher() | msb_value<typename mantissa_storage_type::word_type>();
 				lower = lhs.m_f.lower();
 				lhs.m_f = mantissa_storage_type(higher, lower);
 				++lhs.m_e;

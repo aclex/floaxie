@@ -11,13 +11,14 @@ using namespace floaxie;
 
 bool check_double_conversion()
 {
-	constexpr double pi(std::atan(1) * 4);
+	const double pi(std::atan(1) * 4);
 	cout << "original pi: " << std::bitset<64>(type_punning_cast<std::uint64_t>(pi)) << endl;
 
 	diy_fp w(pi);
 	w.normalize<std::numeric_limits<double>::digits>();
 
-	const double check_pi(static_cast<double>(w));
+	bool accurate;
+	const double check_pi(w.downsample<double>(&accurate));
 	cout << "check_pi: " << std::bitset<64>(type_punning_cast<std::uint64_t>(check_pi)) << endl;
 
 	return check_pi == pi;

@@ -85,11 +85,18 @@ array<pair<const char*, double>, 1> test_pain2 = {{
 int main(int, char**)
 {
 	cout << "s: " << test_chain[0].first << ", d: " << test_chain[0].second << endl;
-	const char* str_end;
+	char* str_end;
+	size_t fallback_count(0);
+	auto fallback_lambda = [&fallback_count](const char* str, char** str_end)
+	{
+		++fallback_count;
+		return floaxie::default_fallback<double>(str, str_end);
+	};
+
 	for (const auto& p : test_chain2)
 	{
 		cout << "\nChecking \"" << p.first << "\"..." << endl;
-		auto ret= atof<double>(p.first, &str_end);
+		auto ret= atof<double>(p.first, &str_end, fallback_lambda);
 		cout << "\tcorrect: " << print_binary(type_punning_cast<double>(p.second)) << endl;
 		cout << "\tresult:  " << print_binary(ret) << endl;
 		if (ret != type_punning_cast<double>(p.second))
@@ -97,6 +104,7 @@ int main(int, char**)
 			cout << "Incorrect conversion!" << endl;
 			return 2;
 		}
+		cout << fallback_count << " times out of " << test_chain2.size() << " fallback conversion was called" << endl;
 	}
 	return 0;
 }

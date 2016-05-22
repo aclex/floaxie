@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Alexey Chernov <4ernov@gmail.com>
+ * Copyright 2015, 2016 Alexey Chernov <4ernov@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,22 +20,34 @@
 #include <floaxie/take_apart.h>
 #include <floaxie/crosh.h>
 
+#include <floaxie/default_fallback.h>
+
 #include <iostream>
 
 namespace floaxie
 {
-	template<typename FloatType> FloatType atof(const char* str, const char** str_end)
+	template
+	<
+		typename FloatType,
+		typename FallbackCallable = FloatType (const char*, char**)
+	>
+	inline FloatType atof(const char* str, char** str_end, FallbackCallable fallback_func = default_fallback<FloatType, char>)
 	{
 		char buffer[max_buffer_length];
 		bool sign;
 		int len, K;
 
-		take_apart(str, str_end, buffer, &sign, &len, &K);
+		take_apart(str, const_cast<const char**>(str_end), buffer, &sign, &len, &K);
 
 		if (*str_end == str)
 			return 0;
 
-		auto ret = crosh<FloatType>(buffer, len, K);
+		bool accurate;
+
+		auto ret = crosh<FloatType>(buffer, len, K, &accurate);
+
+		if (!accurate)
+			return fallback_func(str, str_end);
 
 		if (!sign)
 			ret = -ret;

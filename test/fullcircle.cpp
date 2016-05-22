@@ -14,19 +14,25 @@ using namespace floaxie;
 int main(int, char**)
 {
 	char buffer[128];
-	const char* str_end;
+	char* str_end;
 
 	random_device rd;
 	default_random_engine gen(rd());
 	uniform_real_distribution<> dis(0, 2);
 
 	size_t fault_number = 0;
+	size_t fallback_count = 0;
+	auto fallback_lambda = [&fallback_count](const char* str, char** str_end)
+	{
+		++fallback_count;
+		return default_fallback<double>(str, str_end);
+	};
 
 	for (size_t i = 0; i < short_numbers_length; ++i)
 	{
 		double pi = short_numbers[i];
 		ftoa(pi, buffer);
-		double ret = atof<double>(buffer, &str_end);
+		double ret = atof<double>(buffer, &str_end, fallback_lambda);
 		double ref_value = strtod(buffer, nullptr);
 
 		if (ref_value != pi || ref_value != ret)
@@ -42,6 +48,7 @@ int main(int, char**)
 		}
 	}
 	cout << "crosh failed " << fault_number << " times out of " << short_numbers_length << endl;
+	cout << "crosh triggered fallback conversion " << fallback_count << " times out of " << short_numbers_length << endl;
 
 	return 0;
 }
