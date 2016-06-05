@@ -42,7 +42,7 @@ namespace floaxie
 		if (*str_end == str)
 			return 0;
 
-		bool accurate;
+		bool accurate(false);
 
 		auto ret = crosh<FloatType>(buffer, len, K, &accurate);
 
