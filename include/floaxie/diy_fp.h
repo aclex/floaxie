@@ -90,19 +90,13 @@ namespace floaxie
 		{
 			static_assert(std::numeric_limits<FloatType>::is_iec559, "Only IEEE-754 floating point types are supported");
 
-			union
-			{
-				FloatType value;
-				mantissa_storage_type parts;
-			};
-
 			constexpr auto mantissa_bit_size(std::numeric_limits<FloatType>::digits - 1); // remember hidden bit
 			constexpr mantissa_storage_type my_mantissa_size(std::numeric_limits<mantissa_storage_type>::digits);
 			constexpr mantissa_storage_type mantissa_mask(max_integer_value<FloatType>() >> (my_mantissa_size - mantissa_bit_size));
 			constexpr mantissa_storage_type exponent_mask((~(max_integer_value<FloatType>() & mantissa_mask)) ^ msb_value<FloatType>()); // ignore sign bit
 			constexpr exponent_storage_type exponent_bias(std::numeric_limits<FloatType>::max_exponent - 1 + mantissa_bit_size);
 
-			value = d;
+			mantissa_storage_type parts = type_punning_cast<mantissa_storage_type>(d);
 
 			m_f = parts & mantissa_mask;
 			m_e = (parts & exponent_mask) >> mantissa_bit_size;
@@ -176,16 +170,13 @@ namespace floaxie
 
 		template<typename FloatType> inline FloatType downsample(bool* accurate)
 		{
-			static_assert(std::numeric_limits<FloatType>::is_iec559, "Only IEEE-754 floating point types are supported");
+			static_assert(std::numeric_limits<FloatType>::is_iec559, "Only IEEE-754 floating point types are supported.");
+			static_assert(sizeof(FloatType) == sizeof(mantissa_storage_type), "Float type is not compatible.");
 
 // 			std::cout << "is_normalized: " << is_normalized() << std::endl;
 			assert(is_normalized());
 
-			union
-			{
-				FloatType value;
-				mantissa_storage_type parts;
-			};
+			mantissa_storage_type parts;
 
 			constexpr auto mantissa_bit_size(std::numeric_limits<FloatType>::digits - 1); // remember hidden bit
 			constexpr mantissa_storage_type my_mantissa_size(std::numeric_limits<mantissa_storage_type>::digits);
@@ -225,7 +216,7 @@ namespace floaxie
 // 			std::cout << "would write: " << std::bitset<64>((f >> shift_amount) & mantissa_mask) << std::endl;
 			parts |= ((f >> shift_amount) + round_up(f, shift_amount, accurate)) & mantissa_mask;
 
-			return value;
+			return type_punning_cast<FloatType>(parts);
 		}
 
 		constexpr mantissa_storage_type mantissa() const
