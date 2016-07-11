@@ -39,9 +39,6 @@
 
 namespace floaxie
 {
-	class diy_fp;
-	void precise_multiply4(const diy_fp& lhs, const diy_fp& rhs, diy_fp& rh, diy_fp& rl) noexcept;
-
 	class diy_fp
 	{
 	public:
@@ -63,10 +60,10 @@ namespace floaxie
 		{
 			static_assert(std::numeric_limits<FloatType>::is_iec559, "Only IEEE-754 floating point types are supported");
 
-			constexpr auto mantissa_bit_size(std::numeric_limits<FloatType>::digits - 1); // remember hidden bit
-			constexpr mantissa_storage_type my_mantissa_size(std::numeric_limits<mantissa_storage_type>::digits);
-			constexpr mantissa_storage_type mantissa_mask(max_integer_value<FloatType>() >> (my_mantissa_size - mantissa_bit_size));
-			constexpr mantissa_storage_type exponent_mask((~(max_integer_value<FloatType>() & mantissa_mask)) ^ msb_value<FloatType>()); // ignore sign bit
+			constexpr auto full_mantissa_bit_size(std::numeric_limits<FloatType>::digits);
+			constexpr auto mantissa_bit_size(full_mantissa_bit_size - 1); // remember hidden bit
+			constexpr mantissa_storage_type mantissa_mask(mask<mantissa_storage_type>(mantissa_bit_size));
+			constexpr mantissa_storage_type exponent_mask((~mantissa_mask) ^ msb_value<FloatType>()); // ignore sign bit
 			constexpr exponent_storage_type exponent_bias(std::numeric_limits<FloatType>::max_exponent - 1 + mantissa_bit_size);
 
 			mantissa_storage_type parts = type_punning_cast<mantissa_storage_type>(d);
@@ -83,8 +80,6 @@ namespace floaxie
 			{
 				m_e = 1 - exponent_bias;
 			}
-
-// 			std::cout << "f from double: " << std::bitset<64>(m_f) << std::endl;
 		}
 
 		template<typename FloatType> inline FloatType downsample(bool* accurate)
@@ -92,18 +87,17 @@ namespace floaxie
 			static_assert(std::numeric_limits<FloatType>::is_iec559, "Only IEEE-754 floating point types are supported.");
 			static_assert(sizeof(FloatType) == sizeof(mantissa_storage_type), "Float type is not compatible.");
 
-// 			std::cout << "is_normalized: " << is_normalized() << std::endl;
 			assert(is_normalized());
 
 			mantissa_storage_type parts;
 
-			constexpr auto mantissa_bit_size(std::numeric_limits<FloatType>::digits - 1); // remember hidden bit
-			constexpr mantissa_storage_type my_mantissa_size(std::numeric_limits<mantissa_storage_type>::digits);
-			constexpr mantissa_storage_type mantissa_mask(max_integer_value<FloatType>() >> (my_mantissa_size - mantissa_bit_size));
+			constexpr auto full_mantissa_bit_size(std::numeric_limits<FloatType>::digits);
+			constexpr auto mantissa_bit_size(full_mantissa_bit_size - 1); // remember hidden bit
+			constexpr mantissa_storage_type my_mantissa_size(bit_size<mantissa_storage_type>());
+			constexpr mantissa_storage_type mantissa_mask(mask<mantissa_storage_type>(mantissa_bit_size));
 			constexpr exponent_storage_type exponent_bias(std::numeric_limits<FloatType>::max_exponent - 1 + mantissa_bit_size);
-			constexpr std::size_t lsb_pow(my_mantissa_size - (mantissa_bit_size + 1));
+			constexpr std::size_t lsb_pow(my_mantissa_size - full_mantissa_bit_size);
 
-// 			const auto f(m_f + 1); // provoke brewing round up by 1 ulp (i.e. lead to round-to-nearest on truncation)
 			const auto f(m_f);
 
 // 			std::cout << "my_mantissa_size: " << my_mantissa_size <<", theirs mantissa size: " << mantissa_bit_size << std::endl;
@@ -122,8 +116,6 @@ namespace floaxie
 				return FloatType(0);
 			}
 
-// 			const std::size_t denorm_exp(positive_part(m_e + exponent_storage_type(my_mantissa_size) -
-// 					(std::numeric_limits<FloatType>::min_exponent - int(mantissa_bit_size))));
 			const std::size_t denorm_exp(positive_part(std::numeric_limits<FloatType>::min_exponent - int(mantissa_bit_size) - m_e - 1));
 
 // 			std::cout << "denorm_exp: " << denorm_exp << ", lsb_pow: " << lsb_pow << std::endl;
@@ -165,7 +157,7 @@ namespace floaxie
 				m_e--;
 			}
 
-			constexpr mantissa_storage_type my_mantissa_size(std::numeric_limits<mantissa_storage_type>::digits);
+			constexpr mantissa_storage_type my_mantissa_size(bit_size<mantissa_storage_type>());
 			constexpr mantissa_storage_type e_diff = my_mantissa_size - original_matissa_bit_width - 1;
 
 			m_f <<= e_diff;
@@ -234,7 +226,16 @@ namespace floaxie
 
 		diy_fp& operator++() noexcept
 		{
-			++m_f;
+			if (m_f < std::numeric_limits<diy_fp::mantissa_storage_type>::max())
+			{
+				++m_f;
+			}
+			else
+			{
+				m_f >>= 1;
+				++m_f;
+				++m_e;
+			}
 			return *this;
 		}
 
@@ -247,7 +248,16 @@ namespace floaxie
 
 		diy_fp& operator--() noexcept
 		{
-			--m_f;
+			if (m_f > 1)
+			{
+				--m_f;
+			}
+			else
+			{
+				m_f <<= 1;
+				--m_f;
+				--m_e;
+			}
 			return *this;
 		}
 

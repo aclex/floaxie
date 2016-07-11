@@ -21,9 +21,13 @@
 #include <cctype>
 #include <cassert>
 
+#include <vector>
+
 #include <limits>
 
 #include <iostream>
+
+#include <floaxie/diy_fp.h>
 
 namespace floaxie
 {
@@ -45,10 +49,105 @@ namespace floaxie
 	}
 
 	constexpr std::size_t max_buffer_length(32);
+	constexpr std::size_t offset = 2048;
+
+	// read up to kappa decimal digits (no more digits needed)
+	constexpr std::size_t kappa(decimal_q);
+
+	inline diy_fp::mantissa_storage_type parse_digits(const char* str, char** str_end, bool* sign, int* K)
+	{
+		std::vector<unsigned char> parsed_digits;
+		parsed_digits.reserve(kappa);
+
+		bool dot_set(true);
+		for(std::size_t pos = 0; pos < offset; ++pos)
+		{
+			bool i_should_go(false);
+			const char c = str[pos];
+			switch (c)
+			{
+			case '0':
+				*K += !dot_set;
+				break;
+
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':
+			case '8':
+			case '9':
+				if (parsed_digits.size() < kappa)
+				{
+					parsed_digits.push_back(c - '0');
+					*K -= dot_set;
+				}
+				else
+				{
+					*K += !dot_set;
+				}
+				break;
+
+			case '.':
+				i_should_go = dot_set;
+				dot_set = true;
+				break;
+
+			case '-':
+			case '+':
+				if (pos == 0)
+				{
+					*sign = static_cast<bool>('-' - c); // '+' => true, '-' => false
+					break;
+				}
+				// fall down
+
+			default:
+				i_should_go = true;
+				break;
+			}
+
+			if (i_should_go)
+				break;
+		}
+
+		diy_fp::mantissa_storage_type result(0);
+		for (std::size_t i = 0; i < parsed_digits.size(); ++i)
+			result += parsed_digits[i] * pow10<diy_fp::mantissa_storage_type, decimal_q>(i);
+
+		*str_end = str + pos;
+
+		return result;
+	}
+
+	inline diy_fp parse_mantissa(const char* str, char** str_end, bool* sign, int* K)
+	{
+		diy_fp w(parse_digits(str, str_end, sign, K), 0);
+		w.normalize();
+
+		return w;
+	}
+
+	inline int parse_exponent(const char* str, char** str_end)
+	{
+		bool sign;
+		int K;
+		int value(parse_digits(str, str_end, &sign, &K));
+		return sign ? value : -value;
+	}
 
 	void take_apart(const char* str, const char** str_end, char* buffer, bool* sign, int* len, int* K)
 	{
-		char* mant = buffer;
+		char* exp_part = parse_mantissa(str, sign, w, K);
+
+		if (*exp_part++ != 'e')
+			return;
+
+		int exponent(0);
+		*str_end = parse_exponent(exp_part, &exponent);
+
 		char exp[max_buffer_length];
 
 		char* active_buffer(mant);

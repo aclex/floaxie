@@ -17,7 +17,7 @@
 #ifndef FLOAXIE_ATOF_H
 #define FLOAXIE_ATOF_H
 
-#include <floaxie/take_apart.h>
+// #include <floaxie/take_apart.h>
 #include <floaxie/crosh.h>
 
 #include <floaxie/default_fallback.h>
@@ -33,18 +33,21 @@ namespace floaxie
 	>
 	inline FloatType atof(const char* str, char** str_end, FallbackCallable fallback_func = default_fallback<FloatType, char>)
 	{
-		char buffer[max_buffer_length];
+// 		char buffer[max_buffer_length];
 		bool sign;
-		int len, K;
+		char* str_end_fallback;
+		if (!str_end)
+			str_end = &str_end_fallback;
+// 		int len, K;
 
-		take_apart(str, const_cast<const char**>(str_end), buffer, &sign, &len, &K);
-
-		if (*str_end == str)
-			return 0;
+// 		take_apart(str, const_cast<const char**>(str_end), buffer, &sign, &len, &K);
 
 		bool accurate(false);
 
-		auto ret = crosh<FloatType>(buffer, len, K, &accurate);
+		auto ret = crosh<FloatType>(str, const_cast<const char**>(str_end), &sign, &accurate);
+
+		if (*str_end == str)
+			return 0;
 
 		if (!accurate)
 			return fallback_func(str, str_end);
