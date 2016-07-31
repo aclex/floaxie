@@ -69,17 +69,22 @@ namespace floaxie
 		return result;
 	}
 
-	template<std::size_t kappa, bool no_dot, bool calc_frac>
-	inline diy_fp::mantissa_storage_type parse_digits(const char* str, const char** str_end, bool* sign, int* K, unsigned char* frac = nullptr)
+	struct digit_parse_result
 	{
+		digit_parse_result() : value(0), K(0), sign(true), frac(0) { }
+		diy_fp::mantissa_storage_type value;
+		int K;
+		const char* str_end;
+		bool sign;
+		unsigned char frac;
+	};
+
+	template<std::size_t kappa, bool no_dot, bool calc_frac> inline digit_parse_result parse_digits(const char* str)
+	{
+		digit_parse_result ret;
+
 		std::vector<unsigned char> parsed_digits;
 		parsed_digits.reserve(kappa);
-
-		*K = 0;
-		*sign = true;
-
-		if (calc_frac)
-			*frac = 0;
 
 		bool dot_set(false);
 		bool frac_calculated(!calc_frac);
@@ -129,7 +134,7 @@ namespace floaxie
 					if (!frac_calculated)
 					{
 						auto tail = extract_fraction_digits<frac_width>(str + pos - zero_substring_length);
-						*frac = convert_numerator<fraction_decimal_digits, fraction_binary_digits>(tail);
+						ret.frac = convert_numerator<fraction_decimal_digits, fraction_binary_digits>(tail);
 
 						frac_calculated = true;
 
@@ -147,7 +152,7 @@ namespace floaxie
 			case '+':
 				if (pos == 0)
 				{
-					*sign = static_cast<bool>('-' - c); // '+' => true, '-' => false
+					ret.sign = static_cast<bool>('-' - c); // '+' => true, '-' => false
 					break;
 				}
 				// fall down
@@ -162,77 +167,120 @@ namespace floaxie
 			++pos;
 		}
 
-		diy_fp::mantissa_storage_type result(0);
 		std::size_t pow(0);
 		for (auto rit = parsed_digits.rbegin(); rit != parsed_digits.rend(); ++rit)
-			result += (*rit) * pow10<diy_fp::mantissa_storage_type, decimal_q>(pow++);
+			ret.value += (*rit) * pow10<diy_fp::mantissa_storage_type, decimal_q>(pow++);
 
-		*str_end = str + (pos - 1);
-		*K = pow_gain - fraction_digits_count;
+		ret.str_end = str + (pos - 1);
+		ret.K = pow_gain - fraction_digits_count;
 
-		return result;
+		return ret;
 	}
 
-	inline diy_fp parse_mantissa(const char* str, const char** str_end, bool* sign, int* K)
+	struct mantissa_parse_result
 	{
-		unsigned char frac(0);
-		diy_fp w(parse_digits<decimal_q, false, true>(str, str_end, sign, K, &frac), 0);
+		diy_fp value;
+		int K;
+		const char* str_end;
+		bool sign;
+	};
+
+	inline mantissa_parse_result parse_mantissa(const char* str)
+	{
+		mantissa_parse_result ret;
+
+		const auto& digits_parts(parse_digits<decimal_q, false, true>(str));
+
+		ret.value = diy_fp(digits_parts.value, 0);
+
+		auto& w(ret.value);
 		w.normalize();
 
+		ret.K = digits_parts.K;
+		ret.str_end = digits_parts.str_end;
+		ret.sign = digits_parts.sign;
+
 		// extract additional binary digits and round up gently
-		if (frac)
+		if (digits_parts.frac)
 		{
 			assert(w.exponent() >= -4);
 			const std::size_t lsb_pow(4 + w.exponent());
 
 			diy_fp::mantissa_storage_type f(w.mantissa());
-			f |= frac >> lsb_pow;
+			f |= digits_parts.frac >> lsb_pow;
 
 			w = diy_fp(f, w.exponent());
 
 			// round correctly avoiding integer overflow, undefined behaviour, pain and suffering
 			bool accurate;
-			const bool should_round_up(round_up(frac, lsb_pow, &accurate));
+			const bool should_round_up(round_up(digits_parts.frac, lsb_pow, &accurate));
 			if (should_round_up)
 			{
 				++w;
 			}
 		}
 
-		return w;
+		return ret;
 	}
 
-	inline int parse_exponent(const char* str, const char** str_end)
+	struct exponent_parse_result
 	{
+		int value;
+		const char* str_end;
+	};
+
+	inline exponent_parse_result parse_exponent(const char* str)
+	{
+		exponent_parse_result ret;
 		if (*str != 'e' && *str != 'E')
 		{
-			*str_end = str;
-			return 0;
+			ret.value = 0;
+			ret.str_end = str;
+		}
+		else
+		{
+			++str;
+
+			const auto& digit_parts(parse_digits<exp_width, false, false>(str));
+
+			ret.value = digit_parts.value * pow10<int, exp_width>(digit_parts.K);
+			if (!digit_parts.sign) ret.value = -ret.value;
+
+			ret.str_end = digit_parts.str_end;
 		}
 
-		++str;
-
-		bool sign;
-		int K;
-		int value(parse_digits<exp_width, false, false>(str, str_end, &sign, &K));
-		value *= pow10<int, exp_width>(K);
-		return sign ? value : -value;
+		return ret;
 	}
 
-
-	template<typename FloatType> FloatType crosh(const char* str, const char** str_end, bool* sign, bool* accurate)
+	template<typename FloatType> struct crosh_result
 	{
-		int K(0);
-		diy_fp w(parse_mantissa(str, str_end, sign, &K));
+		FloatType value;
+		const char* str_end;
+		bool accurate;
+	};
 
-		K += parse_exponent(*str_end, str_end);;
+	template<typename FloatType> crosh_result<FloatType> crosh(const char* str)
+	{
+		crosh_result<FloatType> ret;
 
-		if (K)
-			w *= cached_power(K);
+		auto mp(parse_mantissa(str));
+		diy_fp& w(mp.value);
+
+		const auto& ep(parse_exponent(mp.str_end));
+
+		mp.K += ep.value;
+
+		if (mp.K)
+			w *= cached_power(mp.K);
 
 		w.normalize();
+		ret.value = w.downsample<FloatType>(&ret.accurate);
+		ret.str_end = ep.str_end;
 
-		return w.downsample<FloatType>(accurate);
+		if (!mp.sign)
+			ret.value = -ret.value;
+
+		return ret;
 	}
 }
 
