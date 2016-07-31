@@ -211,12 +211,7 @@ namespace floaxie
 			w = diy_fp(f, w.exponent());
 
 			// round correctly avoiding integer overflow, undefined behaviour, pain and suffering
-			bool accurate;
-			const bool should_round_up(round_up(digits_parts.frac, lsb_pow, &accurate));
-			if (should_round_up)
-			{
-				++w;
-			}
+			if (round_up(digits_parts.frac, lsb_pow).value) ++w;
 		}
 
 		return ret;
@@ -255,7 +250,7 @@ namespace floaxie
 	{
 		FloatType value;
 		const char* str_end;
-		bool accurate;
+		bool is_accurate;
 	};
 
 	template<typename FloatType> crosh_result<FloatType> crosh(const char* str)
@@ -273,8 +268,10 @@ namespace floaxie
 			w *= cached_power(mp.K);
 
 		w.normalize();
-		ret.value = w.downsample<FloatType>(&ret.accurate);
+		const auto& f(w.downsample<FloatType>());
+		ret.value = f.value;
 		ret.str_end = ep.str_end;
+		ret.is_accurate = f.is_accurate;
 
 		if (!mp.sign)
 			ret.value = -ret.value;

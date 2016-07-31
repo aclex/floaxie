@@ -81,12 +81,21 @@ namespace floaxie
 			}
 		}
 
-		template<typename FloatType> inline FloatType downsample(bool* accurate)
+		template<typename FloatType> struct downsample_result
+		{
+			FloatType value;
+			bool is_accurate;
+		};
+
+		template<typename FloatType> inline downsample_result<FloatType> downsample()
 		{
 			static_assert(std::numeric_limits<FloatType>::is_iec559, "Only IEEE-754 floating point types are supported.");
 			static_assert(sizeof(FloatType) == sizeof(mantissa_storage_type), "Float type is not compatible.");
 
 			assert(is_normalized());
+
+			downsample_result<FloatType> ret;
+			ret.is_accurate = true;
 
 			mantissa_storage_type parts;
 
@@ -105,14 +114,16 @@ namespace floaxie
 
 			if (m_e >= std::numeric_limits<FloatType>::max_exponent)
 			{
-				return std::numeric_limits<FloatType>::infinity();
+				ret.value = std::numeric_limits<FloatType>::infinity();
+				return ret;
 			}
 
 // 			std::cout << "exp: " << m_e << ", min_exponent: " << std::numeric_limits<FloatType>::min_exponent << std::endl;
 
 			if (m_e + int(my_mantissa_size) < std::numeric_limits<FloatType>::min_exponent - int(mantissa_bit_size))
 			{
-				return FloatType(0);
+				ret.value = FloatType(0);
+				return ret;
 			}
 
 			const std::size_t denorm_exp(positive_part(std::numeric_limits<FloatType>::min_exponent - int(mantissa_bit_size) - m_e - 1));
@@ -124,9 +135,13 @@ namespace floaxie
 // 			std::cout << "shift amount: " << shift_amount << std::endl;
 			parts = (m_e + shift_amount + exponent_bias - (denorm_exp > lsb_pow)) << mantissa_bit_size;
 // 			std::cout << "would write: " << std::bitset<64>((f >> shift_amount) & mantissa_mask) << std::endl;
-			parts |= ((f >> shift_amount) + round_up(f, shift_amount, accurate)) & mantissa_mask;
+			const auto& round(round_up(f, shift_amount));
+			parts |= ((f >> shift_amount) + round.value) & mantissa_mask;
 
-			return type_punning_cast<FloatType>(parts);
+			ret.value = type_punning_cast<FloatType>(parts);
+			ret.is_accurate = round.is_accurate;
+
+			return ret;
 		}
 
 		constexpr mantissa_storage_type mantissa() const

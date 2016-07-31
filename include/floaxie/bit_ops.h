@@ -119,66 +119,27 @@ namespace floaxie
 		return a > b ? a - b : b - a;
 	}
 
-	template<typename NumericType> inline bool round_up_safe(NumericType last_bits, std::size_t round_to_power, bool* accurate) noexcept
+	struct round_result
 	{
-		const NumericType round_bit(0x1ul << (round_to_power - 1));
-		const NumericType parity_bit(0x1ul << round_to_power );
-		const NumericType trailing_bits_mask(round_bit - 1);
-// 		const NumericType check_mask((lsb_pow + 2 <= bit_size<NumericType>()) ? ((round_bit << 2) - 1) ^ round_bit : round_bit - 1);
-		*accurate = suffix(last_bits, round_to_power - 1) != round_bit;
+		bool value;
+		bool is_accurate;
+	};
 
-		std::cout << "last_bits: " << std::bitset<64>(last_bits) << std::endl;
-		std::cout << "round bit exponent: " << ( round_to_power - 1) << std::endl;
-		std::cout << "round_bit: " << bool(last_bits & round_bit) << std::endl;
-		std::cout << "parity_bit: " << bool(last_bits & parity_bit) << std::endl;
-		std::cout << "trailing bits: " << bool(last_bits & trailing_bits_mask) << std::endl;
-
-		return (last_bits & round_bit) && ((last_bits & trailing_bits_mask) || (last_bits & parity_bit));
-	}
-
-	template<typename NumericType> inline bool round_up_fast(NumericType last_bits, std::size_t round_to_power, bool* accurate) noexcept
+	template<typename NumericType> inline round_result round_up_fast(NumericType last_bits, std::size_t round_to_power) noexcept
 	{
+		round_result ret;
+
 		const NumericType round_bit(raised_bit<NumericType>(round_to_power - 1));
 		const NumericType check_mask(mask<NumericType>(round_to_power + 1) ^ round_bit);
-		*accurate = suffix(last_bits, round_to_power) != round_bit;
+		ret.is_accurate = suffix(last_bits, round_to_power) != round_bit;
+		ret.value = (last_bits & round_bit) && (last_bits & check_mask);
 
-		return (last_bits & round_bit) && (last_bits & check_mask);
+		return ret;
 	}
 
-	template<typename NumericType> inline bool round_up(NumericType last_bits, std::size_t round_to_power, bool* accurate) noexcept
+	template<typename NumericType> inline round_result round_up(NumericType last_bits, std::size_t round_to_power) noexcept
 	{
-		return round_up_fast(last_bits, round_to_power, accurate);
-	}
-
-	template<typename NumericType> inline NumericType add_with_carry(NumericType lhs, NumericType rhs, bool& carry) noexcept
-	{
-		std::cout << "add_with_carry lhs: " << std::bitset<bit_size<NumericType>()>(lhs).to_string() << std::endl;
-		std::cout << "add_with_carry rhs: " << std::bitset<bit_size<NumericType>()>(rhs).to_string() << std::endl;
-		if (!nth_bit(lhs, bit_size<NumericType>() - 1) && !nth_bit(rhs, bit_size<NumericType>() - 1))
-		{
-			carry = false;
-			return lhs + rhs;
-		}
-		else
-		{
-			const NumericType l_one(lhs & 0x1), r_one(rhs & 0x1);
-			const NumericType one_sum(l_one + r_one);
-			const NumericType s_lhs(lhs >> 1), s_rhs(rhs >> 1);
-			NumericType sum(s_lhs + s_rhs);
-			std::cout << "lhs': " << std::bitset<bit_size<NumericType>()>(s_lhs).to_string() << std::endl;
-			std::cout << "rhs': " << std::bitset<bit_size<NumericType>()>(s_rhs).to_string() << std::endl;
-			std::cout << "sum: " << std::bitset<bit_size<NumericType>()>(sum).to_string() << std::endl;
-			carry = nth_bit(sum, bit_size<NumericType>() - 1);
-			if (carry || (sum << 1) < std::numeric_limits<NumericType>::max() - 1 || one_sum < 2)
-			{
-				return (sum << 1) + (l_one + r_one);
-			}
-			else
-			{
-				carry = true;
-				return 0;
-			}
-		}
+		return round_up_fast(last_bits, round_to_power);
 	}
 }
 

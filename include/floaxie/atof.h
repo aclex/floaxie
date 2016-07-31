@@ -37,7 +37,7 @@ namespace floaxie
 		if (cr.str_end == str)
 			return 0;
 
-		if (!cr.accurate)
+		if (!cr.is_accurate)
 			return fallback_func(str, str_end);
 
 		if (str_end)
