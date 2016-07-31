@@ -26,7 +26,6 @@
 
 #include <cassert>
 
-#include <floaxie/accuracy.h>
 #include <floaxie/diy_fp.h>
 
 namespace floaxie

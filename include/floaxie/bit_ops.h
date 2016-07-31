@@ -33,7 +33,6 @@
 #include <iostream>
 #include <bitset>
 
-// #include <floaxie/accuracy.h>
 #include <floaxie/integer_of_size.h>
 
 namespace floaxie

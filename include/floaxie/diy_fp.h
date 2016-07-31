@@ -35,7 +35,6 @@
 
 #include <floaxie/bit_ops.h>
 #include <floaxie/utility.h>
-#include <floaxie/accuracy.h>
 
 namespace floaxie
 {
