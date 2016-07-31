@@ -28,7 +28,6 @@
 #include <floaxie/k_comp.h>
 #include <floaxie/cached_power.h>
 #include <floaxie/bit_ops.h>
-#include <floaxie/pow10.h>
 #include <floaxie/fraction.h>
 
 #include <iostream>
@@ -64,7 +63,7 @@ namespace floaxie
 		diy_fp::mantissa_storage_type result(0);
 		std::size_t pow(0);
 		for (auto rit = parsed_digits.rbegin(); rit != parsed_digits.rend(); ++rit)
-			result += (*rit) * pow10<diy_fp::mantissa_storage_type, frac_width>(pow++);
+			result += (*rit) * seq_pow<diy_fp::mantissa_storage_type, 10, frac_width>(pow++);
 
 		return result;
 	}
@@ -169,7 +168,7 @@ namespace floaxie
 
 		std::size_t pow(0);
 		for (auto rit = parsed_digits.rbegin(); rit != parsed_digits.rend(); ++rit)
-			ret.value += (*rit) * pow10<diy_fp::mantissa_storage_type, decimal_q>(pow++);
+			ret.value += (*rit) * seq_pow<diy_fp::mantissa_storage_type, 10, decimal_q>(pow++);
 
 		ret.str_end = str + (pos - 1);
 		ret.K = pow_gain - fraction_digits_count;
@@ -243,7 +242,7 @@ namespace floaxie
 
 			const auto& digit_parts(parse_digits<exp_width, false, false>(str));
 
-			ret.value = digit_parts.value * pow10<int, exp_width>(digit_parts.K);
+			ret.value = digit_parts.value * seq_pow<int, 10, exp_width>(digit_parts.K);
 			if (!digit_parts.sign) ret.value = -ret.value;
 
 			ret.str_end = digit_parts.str_end;
