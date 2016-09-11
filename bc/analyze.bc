@@ -1,0 +1,44 @@
+scale=400
+
+define abs(i) {
+	if (i < 0) return (-i)
+	return (i)
+}
+
+
+define floor(x) {
+	auto os,xx;
+	os=scale;
+	scale=0
+	xx=x/1;
+	if(xx>x) .=xx--
+	scale=os;
+	return(xx)
+}
+
+define check(dpow, bs, pow) {
+	return (10 ^ dpow - bs * 2 ^ pow)
+}
+
+define analyze(dpow, bs, pow) {
+	diff = abs(check(dpow, bs, pow))
+	result = 0
+	if (diff != 0)
+		result = (floor(l(diff) / l(2) - pow))
+
+	return (result)
+}
+
+define estimate(dpow, bs, pow) {
+	diff = check(dpow, bs, pow)
+	if (diff == 0) {
+		print "exact"
+	} else {
+		if (diff > 0) {
+			print "less"
+		} else {
+			print "more"
+		}
+	}
+}
+

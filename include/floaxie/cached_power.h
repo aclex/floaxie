@@ -24,6 +24,7 @@
 #ifndef FLOAXIE_CACHED_POWER_H
 #define FLOAXIE_CACHED_POWER_H
 
+#include <cstddef>
 #include <cassert>
 
 #include <floaxie/diy_fp.h>
@@ -381,10 +382,10 @@ namespace floaxie
 		1069 , 1073 , 1076
 	};
 
+	constexpr static std::size_t pow_0_offset(343);
+
 	inline diy_fp cached_power(int k) noexcept
 	{
-		constexpr static std::size_t pow_0_offset(343);
-
 		assert(k >= -static_cast<int>(pow_0_offset));
 
 		const std::size_t index = pow_0_offset + k;

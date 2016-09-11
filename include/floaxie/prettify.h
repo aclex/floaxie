@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Alexey Chernov <4ernov@gmail.com>
+ * Copyright 2015, 2016 Alexey Chernov <4ernov@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,14 +30,7 @@
 #include <algorithm>
 
 #include <floaxie/static_pow.h>
-
-namespace
-{
-	constexpr unsigned int positive_part(int value)
-	{
-		return value > 0 ? value : 0;
-	}
-}
+#include <floaxie/print.h>
 
 namespace floaxie
 {
@@ -111,7 +104,7 @@ namespace floaxie
 
 		const unsigned int left_shift_src = positive_part(dot_pos);
 		const unsigned int left_shift_dest = dot_pos > 0 ? left_shift_src + (k < 0) : left_offset;
-		const unsigned int left_shift_len = positive_part(len - left_shift_src);
+		const unsigned int left_shift_len = positive_part(static_cast<int>(len) - static_cast<int>(left_shift_src));
 
 		const unsigned int term_pos = len + right_offset + (left_shift_dest - left_shift_src);
 

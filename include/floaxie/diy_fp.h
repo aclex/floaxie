@@ -30,6 +30,10 @@
 #include <ostream>
 #include <utility>
 
+#include <floaxie/bit_ops.h>
+#include <floaxie/print.h>
+#include <floaxie/type_punning_cast.h>
+
 namespace floaxie
 {
 	class diy_fp
@@ -38,32 +42,11 @@ namespace floaxie
 		typedef std::uint64_t mantissa_storage_type;
 		typedef int exponent_storage_type;
 
-		template<typename NumericType> static constexpr std::size_t bit_size()
-		{
-			return sizeof(NumericType) * std::numeric_limits<unsigned char>::digits;
-		}
-
 	private:
-
-		template<typename NumericType> static constexpr mantissa_storage_type msb_value()
-		{
-			return mantissa_storage_type(1) << (bit_size<NumericType>() - 1);
-		}
-
-		template<typename NumericType> static constexpr mantissa_storage_type max_integer_value()
-		{
-			return msb_value<NumericType>() + (msb_value<NumericType>() - 1);
-		}
-
-		template<std::size_t bit_pos> static constexpr mantissa_storage_type hidden_bit()
-		{
-			return mantissa_storage_type(1) << bit_pos;
-		}
-
 		template<typename FloatType> static constexpr mantissa_storage_type hidden_bit()
 		{
 			static_assert(std::numeric_limits<FloatType>::is_iec559, "Only IEEE-754 floating point types are supported");
-			return mantissa_storage_type(1) << (std::numeric_limits<FloatType>::digits - 1);
+			return raised_bit<mantissa_storage_type>(std::numeric_limits<FloatType>::digits - 1);
 		}
 
 	public:
@@ -74,19 +57,13 @@ namespace floaxie
 		{
 			static_assert(std::numeric_limits<FloatType>::is_iec559, "Only IEEE-754 floating point types are supported");
 
-			union
-			{
-				FloatType value;
-				mantissa_storage_type parts;
-			};
-
-			constexpr auto mantissa_bit_size(std::numeric_limits<FloatType>::digits - 1); // remember hidden bit
-			constexpr mantissa_storage_type my_mantissa_size(std::numeric_limits<mantissa_storage_type>::digits);
-			constexpr mantissa_storage_type mantissa_mask(max_integer_value<FloatType>() >> (my_mantissa_size - mantissa_bit_size));
-			constexpr mantissa_storage_type exponent_mask((~(max_integer_value<FloatType>() & mantissa_mask)) ^ msb_value<FloatType>()); // ignore sign bit
+			constexpr auto full_mantissa_bit_size(std::numeric_limits<FloatType>::digits);
+			constexpr auto mantissa_bit_size(full_mantissa_bit_size - 1); // remember hidden bit
+			constexpr mantissa_storage_type mantissa_mask(mask<mantissa_storage_type>(mantissa_bit_size));
+			constexpr mantissa_storage_type exponent_mask((~mantissa_mask) ^ msb_value<FloatType>()); // ignore sign bit
 			constexpr exponent_storage_type exponent_bias(std::numeric_limits<FloatType>::max_exponent - 1 + mantissa_bit_size);
 
-			value = d;
+			mantissa_storage_type parts = type_punning_cast<mantissa_storage_type>(d);
 
 			m_f = parts & mantissa_mask;
 			m_e = (parts & exponent_mask) >> mantissa_bit_size;
@@ -100,6 +77,59 @@ namespace floaxie
 			{
 				m_e = 1 - exponent_bias;
 			}
+		}
+
+		template<typename FloatType> struct downsample_result
+		{
+			FloatType value;
+			bool is_accurate;
+		};
+
+		template<typename FloatType> inline downsample_result<FloatType> downsample()
+		{
+			static_assert(std::numeric_limits<FloatType>::is_iec559, "Only IEEE-754 floating point types are supported.");
+			static_assert(sizeof(FloatType) == sizeof(mantissa_storage_type), "Float type is not compatible.");
+
+			assert(is_normalized());
+
+			downsample_result<FloatType> ret;
+			ret.is_accurate = true;
+
+			constexpr auto full_mantissa_bit_size(std::numeric_limits<FloatType>::digits);
+			constexpr auto mantissa_bit_size(full_mantissa_bit_size - 1); // remember hidden bit
+			constexpr mantissa_storage_type my_mantissa_size(bit_size<mantissa_storage_type>());
+			constexpr mantissa_storage_type mantissa_mask(mask<mantissa_storage_type>(mantissa_bit_size));
+			constexpr exponent_storage_type exponent_bias(std::numeric_limits<FloatType>::max_exponent - 1 + mantissa_bit_size);
+			constexpr std::size_t lsb_pow(my_mantissa_size - full_mantissa_bit_size);
+
+			const auto f(m_f);
+
+			if (m_e >= std::numeric_limits<FloatType>::max_exponent)
+			{
+				ret.value = std::numeric_limits<FloatType>::infinity();
+				return ret;
+			}
+
+			if (m_e + int(my_mantissa_size) < std::numeric_limits<FloatType>::min_exponent - int(mantissa_bit_size))
+			{
+				ret.value = FloatType(0);
+				return ret;
+			}
+
+			const std::size_t denorm_exp(positive_part(std::numeric_limits<FloatType>::min_exponent - int(mantissa_bit_size) - m_e - 1));
+
+			assert(denorm_exp < my_mantissa_size);
+
+			mantissa_storage_type parts;
+			const std::size_t shift_amount(std::max(denorm_exp, lsb_pow));
+			parts = (m_e + shift_amount + exponent_bias - (denorm_exp > lsb_pow)) << mantissa_bit_size;
+			const auto& round(round_up(f, shift_amount));
+			parts |= ((f >> shift_amount) + round.value) & mantissa_mask;
+
+			ret.value = type_punning_cast<FloatType>(parts);
+			ret.is_accurate = round.is_accurate;
+
+			return ret;
 		}
 
 		constexpr mantissa_storage_type mantissa() const
@@ -117,23 +147,38 @@ namespace floaxie
 			return m_f & msb_value<mantissa_storage_type>();
 		}
 
-		template<std::size_t original_matissa_bit_width> void normalize() noexcept
+		template<std::size_t original_matissa_bit_width> std::size_t normalize() noexcept
 		{
 			static_assert(original_matissa_bit_width >= 0, "Mantissa bit width should be >= 0");
 
-			assert(!is_normalized());
+			const auto initial_e = m_e;
 
-			while (!(m_f & hidden_bit<original_matissa_bit_width - 1>()))
+			while (!nth_bit(m_f, original_matissa_bit_width))
 			{
 				m_f <<= 1;
 				m_e--;
 			}
 
-			constexpr mantissa_storage_type my_mantissa_size(std::numeric_limits<mantissa_storage_type>::digits);
-			constexpr mantissa_storage_type e_diff = my_mantissa_size - original_matissa_bit_width;
+			constexpr mantissa_storage_type my_mantissa_size(bit_size<mantissa_storage_type>());
+			constexpr mantissa_storage_type e_diff = my_mantissa_size - original_matissa_bit_width - 1;
 
 			m_f <<= e_diff;
 			m_e -= e_diff;
+
+			return initial_e - m_e;
+		}
+
+		std::size_t normalize() noexcept
+		{
+			const auto initial_e = m_e;
+
+			while (!highest_bit(m_f))
+			{
+				m_f <<= 1;
+				m_e--;
+			}
+
+			return initial_e - m_e;
 		}
 
 		diy_fp& operator-=(const diy_fp& rhs) noexcept
@@ -181,7 +226,16 @@ namespace floaxie
 
 		diy_fp& operator++() noexcept
 		{
-			++m_f;
+			if (m_f < std::numeric_limits<diy_fp::mantissa_storage_type>::max())
+			{
+				++m_f;
+			}
+			else
+			{
+				m_f >>= 1;
+				++m_f;
+				++m_e;
+			}
 			return *this;
 		}
 
@@ -194,7 +248,16 @@ namespace floaxie
 
 		diy_fp& operator--() noexcept
 		{
-			--m_f;
+			if (m_f > 1)
+			{
+				--m_f;
+			}
+			else
+			{
+				m_f <<= 1;
+				--m_f;
+				--m_e;
+			}
 			return *this;
 		}
 
@@ -203,6 +266,16 @@ namespace floaxie
 			auto temp = *this;
 			--(*this);
 			return temp;
+		}
+
+		bool operator==(const diy_fp& d) const noexcept
+		{
+			return m_f == d.m_f && m_e == d.m_e;
+		}
+
+		bool operator!=(const diy_fp& d) const noexcept
+		{
+			return !operator==(d);
 		}
 
 		template<typename FloatType> static std::pair<diy_fp, diy_fp> boundaries(FloatType d) noexcept
@@ -219,22 +292,15 @@ namespace floaxie
 
 			pl.m_e  -= 1;
 
-			pl.normalize<std::numeric_limits<FloatType>::digits + 1>(); // as we've just increased precision of IEEE-754 type by 1
+			constexpr auto d_digits(std::numeric_limits<FloatType>::digits);
 
-			if (mi.m_f == hidden_bit<FloatType>())
-			{
-				mi.m_f <<= 2;
-				mi.m_f -= 1;
+			pl.normalize<d_digits>(); // as we increase precision of IEEE-754 type by 1
 
-				mi.m_e -= 2;
-			}
-			else
-			{
-				mi.m_f <<= 1;
-				mi.m_f -= 1;
+			const unsigned char shift_amount(1 + nth_bit(mi.m_f, d_digits));
 
-				mi.m_e -= 1;
-			}
+			mi.m_f <<= shift_amount;
+			mi.m_f -= 1;
+			mi.m_e -= shift_amount;
 
 			mi.m_f <<= mi.m_e - pl.m_e;
 			mi.m_e = pl.m_e;
@@ -242,9 +308,10 @@ namespace floaxie
 			return result;
 		}
 
-		template<typename Ch, typename Alloc> friend std::basic_ostream<Ch, Alloc>& operator<<(std::basic_ostream<Ch, Alloc>& os, const diy_fp& v)
+		template<typename Ch, typename Alloc>
+		friend std::basic_ostream<Ch, Alloc>& operator<<(std::basic_ostream<Ch, Alloc>& os, const diy_fp& v)
 		{
-			os << "(f = " << v.m_f << ", e = " << v.m_e << ')';
+			os << "(f = " << print_binary(v.m_f) << ", e = " << v.m_e << ')';
 			return os;
 		}
 
