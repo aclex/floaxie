@@ -27,8 +27,10 @@
 #ifndef FLOAXIE_GRISU_H
 #define FLOAXIE_GRISU_H
 
+#include <utility>
 #include <cstdint>
 #include <cstring>
+#include <cassert>
 
 #include <floaxie/diy_fp.h>
 #include <floaxie/cached_power.h>

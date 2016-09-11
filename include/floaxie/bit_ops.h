@@ -24,14 +24,9 @@
 #ifndef FLOAXIE_BIT_OPS_H
 #define FLOAXIE_BIT_OPS_H
 
-#include <type_traits>
-#include <cstdint>
+#include <cstddef>
 #include <limits>
 #include <cassert>
-
-// FIXME
-#include <iostream>
-#include <bitset>
 
 #include <floaxie/integer_of_size.h>
 

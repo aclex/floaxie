@@ -30,11 +30,9 @@
 #include <ostream>
 #include <utility>
 
-#include <iostream>
-#include <bitset>
-
 #include <floaxie/bit_ops.h>
 #include <floaxie/print.h>
+#include <floaxie/type_punning_cast.h>
 
 namespace floaxie
 {
@@ -97,8 +95,6 @@ namespace floaxie
 			downsample_result<FloatType> ret;
 			ret.is_accurate = true;
 
-			mantissa_storage_type parts;
-
 			constexpr auto full_mantissa_bit_size(std::numeric_limits<FloatType>::digits);
 			constexpr auto mantissa_bit_size(full_mantissa_bit_size - 1); // remember hidden bit
 			constexpr mantissa_storage_type my_mantissa_size(bit_size<mantissa_storage_type>());
@@ -108,17 +104,11 @@ namespace floaxie
 
 			const auto f(m_f);
 
-// 			std::cout << "my_mantissa_size: " << my_mantissa_size <<", theirs mantissa size: " << mantissa_bit_size << std::endl;
-// 			std::cout << "f: " << print_double_presentation(f) << std::endl;
-// 			std::cout << "mask: " << std::bitset<64>(mantissa_mask) << std::endl;
-
 			if (m_e >= std::numeric_limits<FloatType>::max_exponent)
 			{
 				ret.value = std::numeric_limits<FloatType>::infinity();
 				return ret;
 			}
-
-// 			std::cout << "exp: " << m_e << ", min_exponent: " << std::numeric_limits<FloatType>::min_exponent << std::endl;
 
 			if (m_e + int(my_mantissa_size) < std::numeric_limits<FloatType>::min_exponent - int(mantissa_bit_size))
 			{
@@ -128,13 +118,11 @@ namespace floaxie
 
 			const std::size_t denorm_exp(positive_part(std::numeric_limits<FloatType>::min_exponent - int(mantissa_bit_size) - m_e - 1));
 
-// 			std::cout << "denorm_exp: " << denorm_exp << ", lsb_pow: " << lsb_pow << std::endl;
 			assert(denorm_exp < my_mantissa_size);
 
+			mantissa_storage_type parts;
 			const std::size_t shift_amount(std::max(denorm_exp, lsb_pow));
-// 			std::cout << "shift amount: " << shift_amount << std::endl;
 			parts = (m_e + shift_amount + exponent_bias - (denorm_exp > lsb_pow)) << mantissa_bit_size;
-// 			std::cout << "would write: " << std::bitset<64>((f >> shift_amount) & mantissa_mask) << std::endl;
 			const auto& round(round_up(f, shift_amount));
 			parts |= ((f >> shift_amount) + round.value) & mantissa_mask;
 
@@ -210,9 +198,6 @@ namespace floaxie
 
 		diy_fp& operator*=(const diy_fp& rhs) noexcept
 		{
-// 			std::cout << "operator*" << std::endl;
-// 			std::cout << "op1: " << (*this) << std::endl;
-// 			std::cout << "op2: " << rhs << std::endl;
 			constexpr auto mask_32 = 0xffffffff;
 
 			const mantissa_storage_type a = m_f >> 32;
@@ -322,9 +307,10 @@ namespace floaxie
 			return result;
 		}
 
-		template<typename Ch, typename Alloc> friend std::basic_ostream<Ch, Alloc>& operator<<(std::basic_ostream<Ch, Alloc>& os, const diy_fp& v)
+		template<typename Ch, typename Alloc>
+		friend std::basic_ostream<Ch, Alloc>& operator<<(std::basic_ostream<Ch, Alloc>& os, const diy_fp& v)
 		{
-			os << "(f = " << std::bitset<64>(v.m_f) << ", e = " << v.m_e << ')';
+			os << "(f = " << print_binary(v.m_f) << ", e = " << v.m_e << ')';
 			return os;
 		}
 

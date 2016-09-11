@@ -38,6 +38,11 @@ namespace floaxie
 		return s;
 	}
 
+	template<typename NumericType> std::string print_binary(NumericType v)
+	{
+		return std::bitset<bit_size<NumericType>()>(v).to_string();
+	}
+
 	template<typename NumericType> std::string print_double_presentation(NumericType v)
 	{
 		auto s(std::bitset<64>(v).to_string());
@@ -45,11 +50,6 @@ namespace floaxie
 		s.insert(54, 1, ' ');
 		s.insert(56, 1, ' ');
 		return s;
-	}
-
-	template<typename NumericType> std::string print_binary(NumericType v)
-	{
-		return std::bitset<bit_size<NumericType>()>(v).to_string();
 	}
 }
 

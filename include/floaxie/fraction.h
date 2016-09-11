@@ -38,9 +38,9 @@ namespace floaxie
 		typename T,
 		std::size_t decimal_digits,
 		std::size_t binary_digits,
-		std::size_t current_binary_digit>
-		struct fraction_converter<T, decimal_digits, binary_digits, current_binary_digit, false
+		std::size_t current_binary_digit
 	>
+	struct fraction_converter<T, decimal_digits, binary_digits, current_binary_digit, false>
 	{
 		static T convert(T decimal_numerator)
 		{
@@ -63,9 +63,9 @@ namespace floaxie
 		typename T,
 		std::size_t decimal_digits,
 		std::size_t binary_digits,
-		std::size_t current_binary_digit>
-		struct fraction_converter<T, decimal_digits, binary_digits, current_binary_digit, true
+		std::size_t current_binary_digit
 	>
+	struct fraction_converter<T, decimal_digits, binary_digits, current_binary_digit, true>
 	{
 		static T convert(T decimal_numerator)
 		{

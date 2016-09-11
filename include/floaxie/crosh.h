@@ -17,11 +17,9 @@
 #ifndef FLOAXIE_CROSH_H
 #define FLOAXIE_CROSH_H
 
-#include <cmath>
-#include <cstring>
-#include <cassert>
-
 #include <vector>
+#include <cstddef>
+#include <cassert>
 
 #include <floaxie/diy_fp.h>
 #include <floaxie/static_pow.h>
@@ -29,9 +27,6 @@
 #include <floaxie/cached_power.h>
 #include <floaxie/bit_ops.h>
 #include <floaxie/fraction.h>
-
-#include <iostream>
-#include <bitset>
 
 namespace floaxie
 {
@@ -211,7 +206,10 @@ namespace floaxie
 			w = diy_fp(f, w.exponent());
 
 			// round correctly avoiding integer overflow, undefined behaviour, pain and suffering
-			if (round_up(digits_parts.frac, lsb_pow).value) ++w;
+			if (round_up(digits_parts.frac, lsb_pow).value)
+			{
+				++w;
+			}
 		}
 
 		return ret;
@@ -238,7 +236,9 @@ namespace floaxie
 			const auto& digit_parts(parse_digits<exp_width, false, false>(str));
 
 			ret.value = digit_parts.value * seq_pow<int, 10, exp_width>(digit_parts.K);
-			if (!digit_parts.sign) ret.value = -ret.value;
+
+			if (!digit_parts.sign)
+				ret.value = -ret.value;
 
 			ret.str_end = digit_parts.str_end;
 		}

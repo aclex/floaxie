@@ -24,6 +24,7 @@
 #ifndef FLOAXIE_CACHED_POWER_H
 #define FLOAXIE_CACHED_POWER_H
 
+#include <cstddef>
 #include <cassert>
 
 #include <floaxie/diy_fp.h>
