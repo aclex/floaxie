@@ -12,13 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * diy_fp class and helper functions use code and influenced by
- * Florian Loitsch's original Grisu algorithms implementation
- * (http://florian.loitsch.com/publications/bench.tar.gz)
- * and "Printing Floating-Point Numbers Quickly and Accurately with
- * Integers" paper
- * (http://florian.loitsch.com/publications/dtoa-pldi2010.pdf)
  */
 
 #ifndef FLOAXIE_INTEGER_OF_SIZE_H

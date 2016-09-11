@@ -268,10 +268,10 @@ namespace floaxie
 			w *= cached_power(mp.K);
 
 		w.normalize();
-		const auto& f(w.downsample<FloatType>());
-		ret.value = f.value;
+		const auto& v(w.downsample<FloatType>());
+		ret.value = v.value;
 		ret.str_end = ep.str_end;
-		ret.is_accurate = f.is_accurate;
+		ret.is_accurate = v.is_accurate;
 
 		if (!mp.sign)
 			ret.value = -ret.value;

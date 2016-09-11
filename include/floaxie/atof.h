@@ -21,8 +21,6 @@
 
 #include <floaxie/default_fallback.h>
 
-#include <iostream>
-
 namespace floaxie
 {
 	template

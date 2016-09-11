@@ -34,7 +34,7 @@
 #include <bitset>
 
 #include <floaxie/bit_ops.h>
-#include <floaxie/utility.h>
+#include <floaxie/print.h>
 
 namespace floaxie
 {

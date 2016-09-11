@@ -5,7 +5,7 @@
 
 #include "floaxie/diy_fp.h"
 #include "floaxie/type_punning_cast.h"
-#include "floaxie/utility.h"
+#include "floaxie/print.h"
 
 using namespace std;
 using namespace floaxie;

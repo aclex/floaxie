@@ -5,7 +5,7 @@
 #include <cstdint>
 
 #include "floaxie/atof.h"
-#include "floaxie/utility.h"
+#include "floaxie/print.h"
 #include "floaxie/type_punning_cast.h"
 
 using namespace std;

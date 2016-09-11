@@ -30,7 +30,7 @@
 #include <algorithm>
 
 #include <floaxie/static_pow.h>
-#include <floaxie/utility.h>
+#include <floaxie/print.h>
 
 namespace floaxie
 {

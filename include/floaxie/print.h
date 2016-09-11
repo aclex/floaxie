@@ -23,9 +23,7 @@
 
 #include <bitset>
 #include <string>
-#include <limits>
 #include <cstdint>
-#include <type_traits>
 
 #include <floaxie/type_punning_cast.h>
 #include <floaxie/bit_ops.h>
