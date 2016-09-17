@@ -52,6 +52,13 @@ namespace floaxie
 		'9', '0', '9', '1', '9', '2', '9', '3', '9', '4', '9', '5', '9', '6', '9', '7', '9', '8', '9', '9'
 	};
 
+	template<std::size_t threshold> inline format choose_format(const std::size_t field_width) noexcept
+	{
+		static_assert(threshold > static_pow<10, 1>(), "Only 10 ⩽ |threshold| ⩽ 100 is supported");
+
+		return field_width > threshold ? format::scientific : format::decimal;
+	}
+
 	inline void fill_exponent(int K, char* buffer) noexcept
 	{
 		const unsigned int hundreds = K / 100;
@@ -85,13 +92,6 @@ namespace floaxie
 		fill_exponent(std::abs(K), buffer + 2);
 	}
 
-	template<unsigned int threshold> inline format choose_format(const unsigned int field_width) noexcept
-	{
-		static_assert(threshold > static_pow<10, 1>(), "Only 10 ⩽ |threshold| ⩽ 100 is supported");
-
-		return field_width > threshold ? format::scientific : format::decimal;
-	}
-
 	inline void print_decimal(char* buffer, const unsigned int len, const int k) noexcept
 	{
 		const int dot_pos = len + k;
@@ -115,7 +115,7 @@ namespace floaxie
 		buffer[term_pos] = '\0';
 	}
 
-	template<unsigned int decimal_scientific_threshold>
+	template<std::size_t decimal_scientific_threshold>
 	inline void prettify(char* buffer, const unsigned int len, const int k) noexcept
 	{
 		/* v = buffer * 10 ^ k
@@ -123,7 +123,9 @@ namespace floaxie
 			this way dot_pos gives the position of the comma.
 		*/
 		const int dot_pos = len + k;
-		const unsigned int field_width = std::max(dot_pos, -k);
+
+		// is always positive, since dot_pos is negative only when k is negative
+		const std::size_t field_width = std::max(dot_pos, -k);
 
 		switch (choose_format<decimal_scientific_threshold>(field_width))
 		{
