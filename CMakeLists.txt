@@ -12,7 +12,6 @@ add_definitions(-Wextra)
 include_directories(include)
 
 add_subdirectory(example)
-add_subdirectory(src)
 
 if (BUILD_TESTS)
 	enable_testing()
