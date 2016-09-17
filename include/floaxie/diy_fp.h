@@ -186,7 +186,6 @@ namespace floaxie
 			assert(m_e == rhs.m_e && m_f >= rhs.m_f);
 
 			m_f -= rhs.m_f;
-			m_e = rhs.m_e;
 
 			return *this;
 		}
