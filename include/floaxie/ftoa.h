@@ -18,6 +18,7 @@
 #define FLOAXIE_FTOA_H
 
 #include <cmath>
+#include <cstddef>
 #include <cassert>
 
 #include <floaxie/grisu.h>
@@ -25,6 +26,12 @@
 
 namespace floaxie
 {
+	constexpr std::size_t max_buffer_size() noexcept
+	{
+		// digits, '.' (or 'e' plus three-digit power with optional sign) and '\0'
+		return max_digits() + 1 + 1 + 3 + 1;
+	}
+
 	template<typename FloatType> inline void ftoa(FloatType v, char* buffer) noexcept
 	{
 		assert(!std::isnan(v));

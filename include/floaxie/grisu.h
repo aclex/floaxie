@@ -28,6 +28,7 @@
 #define FLOAXIE_GRISU_H
 
 #include <utility>
+#include <limits>
 #include <cstdint>
 #include <cstring>
 #include <cassert>
@@ -61,6 +62,11 @@ namespace floaxie
 		if (n < static_pow<10, 8>()) return make_kappa_div<8>();
 		if (n < static_pow<10, 9>()) return make_kappa_div<9>();
 		return make_kappa_div<10>();
+	}
+
+	constexpr std::size_t max_digits() noexcept
+	{
+		return std::numeric_limits<std::uint32_t>::digits10 + std::numeric_limits<typename diy_fp::mantissa_storage_type>::digits10;
 	}
 
 	template<bool positive_exponent> inline void digit_gen(const diy_fp& Mp, const diy_fp& Mm, char* buffer, int* len, int* K) noexcept;
