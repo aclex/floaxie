@@ -37,20 +37,25 @@
 #include <floaxie/cached_power.h>
 #include <floaxie/k_comp.h>
 #include <floaxie/static_pow.h>
+#include <floaxie/integer_of_size.h>
 
 namespace floaxie
 {
-	template<unsigned int pow> constexpr std::pair<int, std::uint32_t> make_kappa_div()
+	typedef integer_of_size<sizeof(diy_fp::mantissa_storage_type) / 2>::type half_of_mantissa_storage_type;
+
+	typedef std::pair<unsigned char, half_of_mantissa_storage_type> kappa_pair_type;
+
+	template<unsigned char pow> constexpr kappa_pair_type make_kappa_div()
 	{
-		return std::pair<int, std::uint32_t>(pow, static_pow<10, pow - 1>());
+		return kappa_pair_type(pow, static_pow<10, pow - 1>());
 	}
 
-	template<> constexpr std::pair<int, std::uint32_t> make_kappa_div<0>()
+	template<> constexpr kappa_pair_type make_kappa_div<0>()
 	{
-		return std::pair<int, std::uint32_t>(0, 1);
+		return kappa_pair_type(0, 1);
 	}
 
-	inline std::pair<int, std::uint32_t> calculate_kappa_div(std::uint32_t n) noexcept
+	inline kappa_pair_type calculate_kappa_div(half_of_mantissa_storage_type n) noexcept
 	{
 		if (n < static_pow<10, 1>()) return make_kappa_div<1>();
 		if (n < static_pow<10, 2>()) return make_kappa_div<2>();
@@ -77,10 +82,10 @@ namespace floaxie
 
 		const diy_fp& delta(Mp - Mm);
 
-		const diy_fp one(0x1ul << -Mp.exponent(), Mp.exponent());
+		const diy_fp one(raised_bit<diy_fp::mantissa_storage_type>(-Mp.exponent()), Mp.exponent());
 
-		std::uint32_t p1 = Mp.mantissa() >> -one.exponent();
-		std::uint64_t p2 = Mp.mantissa() & (one.mantissa() - 1);
+		half_of_mantissa_storage_type p1 = Mp.mantissa() >> -one.exponent();
+		diy_fp::mantissa_storage_type p2 = Mp.mantissa() & (one.mantissa() - 1);
 
 		assert(p1 || p2);
 
@@ -94,7 +99,7 @@ namespace floaxie
 		{
 			auto&& kappa_div(calculate_kappa_div(p1));
 
-			int& kappa(kappa_div.first);
+			unsigned char& kappa(kappa_div.first);
 			std::uint32_t& div(kappa_div.second);
 
 			while (kappa > 0 && p1)
@@ -116,33 +121,37 @@ namespace floaxie
 			{
 				std::memset(buffer + (*len), '0', kappa);
 				(*len) += kappa;
-				kappa = 0;
 			}
 		}
 
 		const bool some_already_written = (*len) > 0;
-		int kappa = 0;
+		unsigned char kappa(0);
 
 		while (p2 > delta_f)
 		{
 			p2 *= 10;
 
-			const int d = p2 >> -one.exponent();
+			const unsigned char d = p2 >> -one.exponent();
 
 			if (some_already_written || d)
 				buffer[(*len)++] = '0' + d;
 
 			p2 &= one.mantissa() - 1;
 
-			kappa--;
+			++kappa;
 			delta_f *= 10;
 		}
 
-		*K += kappa;
+		*K -= kappa;
 	}
 
 	template<int alpha, int gamma> inline void digit_gen(const diy_fp& Mp, const diy_fp& Mm, char* buffer, int* len, int* K) noexcept
 	{
+		static_assert(std::abs(alpha) >= bit_size<diy_fp::mantissa_storage_type>() / 2 &&
+			std::abs(gamma) >= bit_size<diy_fp::mantissa_storage_type>() / 2,
+			"Current implementation supports only α and γ, which absolute values are equal or higher, "
+			"than a half of integer mantissa bit size (typically 32) for performance reasons.");
+
 		constexpr bool exponent_is_positive = alpha > 0 && gamma > 0;
 		digit_gen<exponent_is_positive>(Mp, Mm, buffer, len, K);
 	}
