@@ -59,9 +59,9 @@ namespace floaxie
 		return field_width > threshold ? format::scientific : format::decimal;
 	}
 
-	inline void fill_exponent(int K, char* buffer) noexcept
+	inline void fill_exponent(unsigned int K, char* buffer) noexcept
 	{
-		const unsigned int hundreds = K / 100;
+		const unsigned char hundreds = K / 100;
 		K %= 100;
 		buffer[0] = '0' + hundreds;
 		buffer += (hundreds > 0);
@@ -94,12 +94,11 @@ namespace floaxie
 
 	inline void print_decimal(char* buffer, const unsigned int len, const int k) noexcept
 	{
-		const int dot_pos = len + k;
+		const int dot_pos = static_cast<int>(len) + k;
 
 		const unsigned int actual_dot_pos = dot_pos > 0 ? dot_pos : 1;
 
-		// sorry for obfuscating, but that branchless one works:
-		const unsigned int left_offset = (2 + std::abs(dot_pos)) * (dot_pos <= 0); // ≡ dot_pos > 0 ? 0 : 2 - dot_pos
+		const unsigned int left_offset = dot_pos > 0 ? 0 : 2 - dot_pos;
 		const unsigned int right_offset = positive_part(k);
 
 		const unsigned int left_shift_src = positive_part(dot_pos);
@@ -122,7 +121,7 @@ namespace floaxie
 			dot_pos is such that 10 ^ (dot_pos - 1) <= v < 10 ^ dot_pos
 			this way dot_pos gives the position of the comma.
 		*/
-		const int dot_pos = len + k;
+		const int dot_pos = static_cast<int>(len) + k;
 
 		// is always positive, since dot_pos is negative only when k is negative
 		const std::size_t field_width = std::max(dot_pos, -k);
