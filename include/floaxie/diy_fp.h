@@ -24,6 +24,7 @@
 #ifndef FLOAXIE_DIY_FP_H
 #define FLOAXIE_DIY_FP_H
 
+#include <algorithm>
 #include <limits>
 #include <cstdint>
 #include <cassert>
@@ -147,11 +148,9 @@ namespace floaxie
 			return m_f & msb_value<mantissa_storage_type>();
 		}
 
-		template<std::size_t original_matissa_bit_width> std::size_t normalize() noexcept
+		template<std::size_t original_matissa_bit_width> void normalize() noexcept
 		{
 			static_assert(original_matissa_bit_width >= 0, "Mantissa bit width should be >= 0");
-
-			const auto initial_e = m_e;
 
 			while (!nth_bit(m_f, original_matissa_bit_width))
 			{
@@ -164,21 +163,15 @@ namespace floaxie
 
 			m_f <<= e_diff;
 			m_e -= e_diff;
-
-			return initial_e - m_e;
 		}
 
-		std::size_t normalize() noexcept
+		void normalize() noexcept
 		{
-			const auto initial_e = m_e;
-
 			while (!highest_bit(m_f))
 			{
 				m_f <<= 1;
 				m_e--;
 			}
-
-			return initial_e - m_e;
 		}
 
 		diy_fp& operator-=(const diy_fp& rhs) noexcept
