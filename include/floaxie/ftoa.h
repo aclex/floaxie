@@ -26,12 +26,54 @@
 
 namespace floaxie
 {
+	/** \brief Returns maximum size of buffer can ever be required by `ftoa()`.
+	 *
+	 * Maximum size of buffer passed to `ftoa()` guaranteed not to lead to
+	 * undefined behaviour.
+	 *
+	 * \return maximum size of buffer, which can ever be used in the very worst
+	 * case.
+	 */
 	constexpr std::size_t max_buffer_size() noexcept
 	{
 		// digits, '.' (or 'e' plus three-digit power with optional sign) and '\0'
 		return max_digits() + 1 + 1 + 3 + 1;
 	}
 
+	/** \brief Prints floating point value to optimal string representation.
+	 *
+	 * The function prints the string representation of the specified floating
+	 * point value using
+	 * [**Grisu2**](http://florian.loitsch.com/publications/dtoa-pldi2010.pdf)
+	 * algorithm and tries to get it as shorter, as possible. Usually it
+	 * succeeds, but sometimes fails, and the output representation is not
+	 * the shortest for this value. For the sake of speed improvement this is
+	 * ignored, while there's **Grisu3** algorithm which rules this out
+	 * informing the caller of the failure, so that it can call slower, but
+	 * more accurate algorithm in this case.
+	 *
+	 * The format of the string representation is one of the following:
+	 * 1. Decimal notation, which contains:
+	 *  - minus sign ('-') in case of negative value
+	 *  - sequence of one or more decimal digits optionally containing
+	 *    decimal point character ('.')
+	 * 2. Decimal exponent notation, which contains:
+	 *  - minus ('-') sign in case of negative value
+	 *  - sequence of one or more decimal digits optionally containing
+	 *    decimal point character ('.')
+	 *  - 'e' character followed by minus sign ('-') in case of negative
+	 *    power of the value (i.e. the specified value is < 1) and
+	 *    sequence of one, two of three decimal digits.
+	 *
+	 * \tparam FloatType type of floating point value, calculated using passed
+	 * input parameter \p **v**
+	 *
+	 * \param v floating point value to print
+	 * \param buffer character buffer of enough size (see `max_buffer_size()`)
+	 * to print the representation to
+	 *
+	 * \see `max_buffer_size()`
+	 */
 	template<typename FloatType> inline void ftoa(FloatType v, char* buffer) noexcept
 	{
 		assert(!std::isnan(v));

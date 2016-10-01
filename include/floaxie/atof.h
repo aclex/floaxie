@@ -21,8 +21,44 @@
 
 #include <floaxie/default_fallback.h>
 
+/** \brief Floaxie functions templates.
+ *
+ * This namespace contains two main public floaxie functions (`atof()` and
+ * `ftoa()`), as well as several helper functions (e.g. `max_buffer_size()`)
+ * and internal type and function templates.
+ */
 namespace floaxie
 {
+	/** \brief Parses floating point string representation.
+	 *
+	 * Interprets string representation of floating point value using Krosh
+	 * algorithm and, if successful, value of the specified type is returned.
+	 *
+	 * The accepted representation format is ordinary or exponential decimal
+	 * floating point expression, containing:
+	 *   - optional sign ('+' or '-')
+	 *   - sequence of one or more decimal digits optionally containing decimal
+	 *     point character ('.')
+	 *   - optional 'e' of 'E' character followed by optional sign ('+' or '-')
+	 *     and sequence of one or more decimal digits.
+	 *
+	 * Function doesn't expects any preceding spacing characters and treats the
+	 * representation as incorrect, if there's any.
+	 *
+	 * \tparam FloatType target floating point type to store results.
+	 * \tparam FallbackCallable fallback conversion function type, in case of
+	 * Krosh is unsure if the result is correctly rounded (default is strtof()
+	 * for floats, strtod() for doubles, strtold() for long doubles).
+	 *
+	 * \param str buffer containing the string representation of the value.
+	 * \param str_end out parameter, which will contain a pointer to first
+	 * character after the parsed value in the specified buffer. If str_end is
+	 * NULL, it is ignored.
+	 * \param fallback_func pointer to fallback function.
+	 *
+	 * \return parsed value, if the input is correct, default constructed value
+	 * otherwise.
+	 */
 	template
 	<
 		typename FloatType,
