@@ -47,8 +47,8 @@ int main(int, char**)
 // 			return -1;
 		}
 	}
-	cout << "crosh failed " << fault_number << " times out of " << short_numbers_length << endl;
-	cout << "crosh triggered fallback conversion " << fallback_count << " times out of " << short_numbers_length << endl;
+	cout << "krosh failed " << fault_number << " times out of " << short_numbers_length << endl;
+	cout << "krosh triggered fallback conversion " << fallback_count << " times out of " << short_numbers_length << endl;
 
 	return 0;
 }

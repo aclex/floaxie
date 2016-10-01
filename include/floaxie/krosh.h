@@ -246,16 +246,16 @@ namespace floaxie
 		return ret;
 	}
 
-	template<typename FloatType> struct crosh_result
+	template<typename FloatType> struct krosh_result
 	{
 		FloatType value;
 		const char* str_end;
 		bool is_accurate;
 	};
 
-	template<typename FloatType> crosh_result<FloatType> crosh(const char* str)
+	template<typename FloatType> krosh_result<FloatType> krosh(const char* str)
 	{
-		crosh_result<FloatType> ret;
+		krosh_result<FloatType> ret;
 
 		auto mp(parse_mantissa(str));
 		diy_fp& w(mp.value);

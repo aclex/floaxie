@@ -17,7 +17,7 @@
 #ifndef FLOAXIE_ATOF_H
 #define FLOAXIE_ATOF_H
 
-#include <floaxie/crosh.h>
+#include <floaxie/krosh.h>
 
 #include <floaxie/default_fallback.h>
 
@@ -30,7 +30,7 @@ namespace floaxie
 	>
 	inline FloatType atof(const char* str, char** str_end, FallbackCallable fallback_func = default_fallback<FloatType, char>)
 	{
-		const auto& cr(crosh<FloatType>(str));
+		const auto& cr(krosh<FloatType>(str));
 
 		if (cr.str_end == str)
 			return 0;
