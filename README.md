@@ -15,7 +15,7 @@ The algorithm parses decimal mantissa to extent of slightly more decimal digit c
 Example
 -------
 **Printing:**
-```C++
+```{.cpp}
 #include <iostream>
 
 #include "floaxie/ftoa.h"
@@ -36,7 +36,7 @@ int main(int, char**)
 ```
 
 **Parsing:**
-```C++
+```{.cpp}
 #include <iostream>
 
 #include "floaxie/atof.h"
