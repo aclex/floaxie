@@ -11,7 +11,7 @@ int main(int, char**)
 	char buffer[128];
 
 	ftoa(pi, buffer);
-	std::cout << "pi: " << pi << ", buffer: " << buffer << std::endl;
+	cout << "pi: " << pi << ", buffer: " << buffer << endl;
 
 	return 0;
 }
