@@ -34,11 +34,17 @@
 
 namespace floaxie
 {
+	/** \brief Format enumeration.
+	 *
+	 */
 	enum format {
+		/** \brief Decimal format */
 		decimal,
+		/** \brief Decimal exponent (a.k.a. *scientific*) format */
 		scientific
 	};
 
+	/** \brief LUT of two-digit decimal values to speed up their printing. */
 	constexpr const char digits_lut[200] = {
 		'0', '0', '0', '1', '0', '2', '0', '3', '0', '4', '0', '5', '0', '6', '0', '7', '0', '8', '0', '9',
 		'1', '0', '1', '1', '1', '2', '1', '3', '1', '4', '1', '5', '1', '6', '1', '7', '1', '8', '1', '9',
@@ -52,6 +58,14 @@ namespace floaxie
 		'9', '0', '9', '1', '9', '2', '9', '3', '9', '4', '9', '5', '9', '6', '9', '7', '9', '8', '9', '9'
 	};
 
+	/** \brief Detects the more appropriate format to print based on
+	 * \p **threshold** value.
+	 * \tparam threshold the maximum number of digits in the string
+	 * representation, when decimal format can be used (otherwise decimal
+	 * exponent or *scientific* format is used)
+	 *
+	 * \return `format` value of the chosen format
+	 */
 	template<std::size_t threshold> inline format choose_format(const std::size_t field_width) noexcept
 	{
 		static_assert(threshold > static_pow<10, 1>(), "Only 10 ⩽ |threshold| ⩽ 100 is supported");
@@ -59,6 +73,10 @@ namespace floaxie
 		return field_width > threshold ? format::scientific : format::decimal;
 	}
 
+	/** \brief Prints decimal exponent value.
+	 * \param K decimal exponent value
+	 * \param buffer character buffer to print to
+	 */
 	inline void fill_exponent(unsigned int K, char* buffer) noexcept
 	{
 		const unsigned char hundreds = K / 100;
@@ -73,6 +91,16 @@ namespace floaxie
 		buffer[2] = '\0';
 	}
 
+	/** \brief Prints exponent (*scientific*) part of value representation in
+	 * decimal exponent format.
+	 *
+	 * \param buffer character buffer with properly printed mantissa
+	 * \param len output parameter to return the length of printed
+	 * representation
+	 * \param dot_pos number of character, where dot position should be placed
+	 *
+	 * \see `print_decimal()`
+	 */
 	inline void print_scientific(char* buffer, const unsigned int len, const int dot_pos) noexcept
 	{
 		const int K = dot_pos - 1;
@@ -92,6 +120,15 @@ namespace floaxie
 		fill_exponent(std::abs(K), buffer + 2);
 	}
 
+	/** \brief Formats decimal mantissa part of value representation.
+	 *
+	 * Tides up the printed digits in \p **buffer**, adding leading zeros,
+	 * placing the decimal point into the proper place etc.
+	 *
+	 * \param buffer character buffer with printed digits
+	 * \param len length of current representation in \p **buffer**
+	 * \param k decimal exponent of the value
+	 */
 	inline void print_decimal(char* buffer, const unsigned int len, const int k) noexcept
 	{
 		const int dot_pos = static_cast<int>(len) + k;
@@ -114,6 +151,21 @@ namespace floaxie
 		buffer[term_pos] = '\0';
 	}
 
+	/** \brief Makes final format corrections to have the string representation
+	 * be properly and pretty printed (with decimal point in place, exponent
+	 * part, where appropriate etc.).
+	 *
+	 * \tparam decimal_scientific_threshold the maximum number of digits in the
+	 * string representation, when decimal format can be used (otherwise
+	 * decimal exponent or *scientific* format is used)
+	 *
+	 * \param buffer character buffer with printed digits
+	 * \param len length of current representation in \p **buffer**
+	 * \param k decimal exponent of the value
+	 *
+	 * \see `print_decimal()`
+	 * \see `print_scientific()`
+	 */
 	template<std::size_t decimal_scientific_threshold>
 	inline void prettify(char* buffer, const unsigned int len, const int k) noexcept
 	{
