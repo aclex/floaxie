@@ -26,6 +26,11 @@
 
 namespace floaxie
 {
+	/** \brief Correct type-punning cast implementation to avoid any possible
+	 * undefined behaviour.
+	 *
+	 * \see https://en.wikipedia.org/wiki/Type_punning
+	 */
 	template<typename T, typename U> inline T type_punning_cast(const U& x)
 	{
 		static_assert(sizeof(T) == sizeof(U),

@@ -18,8 +18,8 @@
  *
  */
 
-#ifndef FLOAXIE_UTILITY_H
-#define FLOAXIE_UTILITY_H
+#ifndef FLOAXIE_PRINT_H
+#define FLOAXIE_PRINT_H
 
 #include <bitset>
 #include <string>
@@ -30,6 +30,11 @@
 
 namespace floaxie
 {
+	/** \brief Prints `double` value in binary format, splitting sign, exponent
+	 * and mantissa parts with spaces.
+	 *
+	 * Useful for debugging purposes.
+	 */
 	std::string print_binary(double f)
 	{
 		auto s(std::bitset<64>(type_punning_cast<std::uint64_t>(f)).to_string());
@@ -38,11 +43,13 @@ namespace floaxie
 		return s;
 	}
 
+	/** \brief Print arbitrary numeric value in binary format. */
 	template<typename NumericType> std::string print_binary(NumericType v)
 	{
 		return std::bitset<bit_size<NumericType>()>(v).to_string();
 	}
 
+	/** \brief Print arbitrary numeric value as if it were `double`. */
 	template<typename NumericType> std::string print_double_presentation(NumericType v)
 	{
 		auto s(std::bitset<64>(v).to_string());
@@ -53,4 +60,4 @@ namespace floaxie
 	}
 }
 
-#endif // FLOAXIE_UTILITY_H
+#endif // FLOAXIE_PRINT_H
