@@ -37,13 +37,38 @@
 
 namespace floaxie
 {
+	/** \brief Integer representation of floating point value.
+	 *
+	 * The type represents floating point value using two integer values, one
+	 * to store **mantissa** and another to hold **exponent**.
+	 *
+	 * **Mantissa** is stored using the biggest natively supported standard
+	 * integer type — currently it's 64-bit unsigned integer value. Emulated
+	 * (e.g. *big integer*) integer types are not used, as they don't follow
+	 * the ideas behind the fast integer algorithms (they are slower due to
+	 * the emulation part).
+	 *
+	 * **Exponent** is stored in `int` value.
+	 *
+	 * The type is used in **Grisu** and **Krosh** algorithms.
+	 */
 	class diy_fp
 	{
 	public:
+		/** \brief Mantissa storage type abstraction */
 		typedef std::uint64_t mantissa_storage_type;
+		/** \brief Exponent storage type abstraction */
 		typedef int exponent_storage_type;
 
 	private:
+		/** \brief Returns value of hidden bit for the specified floating point type.
+		 *
+		 * \tparam FloatType floating point type to calculate hidden bit value
+		 * for
+		 *
+		 * \return integer value of hidden bit of the specified type in
+		 * `mantissa_storage_type` variable.
+		 */
 		template<typename FloatType> static constexpr mantissa_storage_type hidden_bit()
 		{
 			static_assert(std::numeric_limits<FloatType>::is_iec559, "Only IEEE-754 floating point types are supported");
@@ -51,9 +76,22 @@ namespace floaxie
 		}
 
 	public:
+		/** \brief Default constructor. */
 		diy_fp() = default;
+
+		/** \brief Copy constructor. */
 		diy_fp(const diy_fp&) = default;
-		constexpr diy_fp(mantissa_storage_type mantissa, exponent_storage_type exponent) : m_f(mantissa), m_e(exponent) { }
+
+		/** \brief Component initialization constructor. */
+		constexpr diy_fp(mantissa_storage_type mantissa, exponent_storage_type exponent) noexcept : m_f(mantissa), m_e(exponent) { }
+
+		/** \brief Initializes `diy_fp` value from the value of floating point
+		 * type.
+		 *
+		 * It splits floating point value into mantissa and exponent
+		 * components, calculates hidden bit of mantissa and initializes
+		 * `diy_fp` value with the results of calculations.
+		 */
 		template<typename FloatType> explicit diy_fp(FloatType d) noexcept
 		{
 			static_assert(std::numeric_limits<FloatType>::is_iec559, "Only IEEE-754 floating point types are supported");
@@ -80,12 +118,24 @@ namespace floaxie
 			}
 		}
 
+		/** \brief Downsample result structure.
+		 *
+		 */
 		template<typename FloatType> struct downsample_result
 		{
+			/** \brief Downsampled floating point result. */
 			FloatType value;
+			/** \brief Flag indicating if the conversion is accurate (no
+			 * [rounding errors] (http://www.exploringbinary.com/decimal-to-floating-point-needs-arbitrary-precision/) */
 			bool is_accurate;
 		};
 
+		/** \brief Convert `diy_fp` value back to floating point type correctly
+		 * downsampling mantissa value.
+		 *
+		 * \tparam FloatType floating point type to convert to
+		 * \return floating point value of the specified type.
+		 */
 		template<typename FloatType> inline downsample_result<FloatType> downsample()
 		{
 			static_assert(std::numeric_limits<FloatType>::is_iec559, "Only IEEE-754 floating point types are supported.");
@@ -133,21 +183,32 @@ namespace floaxie
 			return ret;
 		}
 
+		/** \brief Mantissa component. */
 		constexpr mantissa_storage_type mantissa() const
 		{
 			return m_f;
 		}
 
+		/** \brief Exponent component. */
 		constexpr exponent_storage_type exponent() const
 		{
 			return m_e;
 		}
 
+		/** \brief Checks if the value is normalized. */
 		bool is_normalized() const noexcept
 		{
 			return m_f & msb_value<mantissa_storage_type>();
 		}
 
+		/** \brief Normalizes the value using additional information on
+		 * mantissa content.
+		 * \tparam original_matissa_bit_width bit width of the value stored in
+		 * mantissa, given that it is already normalized. This information
+		 * speeds up the normalization, allowing to shift the value by several
+		 * positions right at one take, rather than shifting it by one step and
+		 * checking if it's still not normalized.
+		 */
 		template<std::size_t original_matissa_bit_width> void normalize() noexcept
 		{
 			static_assert(original_matissa_bit_width >= 0, "Mantissa bit width should be >= 0");
@@ -165,6 +226,7 @@ namespace floaxie
 			m_e -= e_diff;
 		}
 
+		/** \brief Normalizes the value the common way. */
 		void normalize() noexcept
 		{
 			while (!highest_bit(m_f))
@@ -174,6 +236,20 @@ namespace floaxie
 			}
 		}
 
+		/** \brief Subtracts the specified `diy_fp` value from the current.
+		 *
+		 * Simple mantissa subtraction of `diy_fp` values. Works fine and neat
+		 * for the case, when left value is bigger, than the right and the
+		 * values are of the same exponent.
+		 *
+		 * If exponents of the values differ or mantissa of left value is less,
+		 * than mantissa of right value, the behaviour is undefined.
+		 *
+		 * \param rhs subtrahend
+		 *
+		 * \return reference to current value, i.e. the result of the
+		 * subtraction.
+		 */
 		diy_fp& operator-=(const diy_fp& rhs) noexcept
 		{
 			assert(m_e == rhs.m_e && m_f >= rhs.m_f);
@@ -183,39 +259,54 @@ namespace floaxie
 			return *this;
 		}
 
+		/** \brief Non-destructive version of `diy_fp::operator-=()`. */
 		diy_fp operator-(const diy_fp& rhs) const noexcept
 		{
 			return diy_fp(*this) -= rhs;
 		}
 
+		/** \brief Fast and coarse multiplication.
+		 *
+		 * Performs multiplication of `diy_fp` values ignoring some carriers
+		 * for the sake of performance. This multiplication algorithm is used
+		 * in original **Grisu** implementation and also works fine for
+		 * **Krosh**.
+		 *
+		 * \param rhs multiplier
+		 *
+		 * \return reference to current value, i.e. the result of the
+		 * multiplication.
+		 */
 		diy_fp& operator*=(const diy_fp& rhs) noexcept
 		{
-			constexpr auto mask_32 = 0xffffffff;
+			constexpr std::size_t half_width = bit_size<mantissa_storage_type>() / 2;
+			constexpr auto mask_half = mask<mantissa_storage_type>(half_width);
 
-			// TODO: don't rely on 64 bit size of mantissa_storage_type
-			const mantissa_storage_type a = m_f >> 32;
-			const mantissa_storage_type b = m_f & mask_32;
-			const mantissa_storage_type c = rhs.m_f >> 32;
-			const mantissa_storage_type d = rhs.m_f & mask_32;
+			const mantissa_storage_type a = m_f >> half_width;
+			const mantissa_storage_type b = m_f & mask_half;
+			const mantissa_storage_type c = rhs.m_f >> half_width;
+			const mantissa_storage_type d = rhs.m_f & mask_half;
 
 			const mantissa_storage_type ac = a * c;
 			const mantissa_storage_type bc = b * c;
 			const mantissa_storage_type ad = a * d;
 			const mantissa_storage_type bd = b * d;
 
-			const mantissa_storage_type tmp = (bd >> 32) + (ad & mask_32) + (bc & mask_32) + (0x1ul << 31);
+			const mantissa_storage_type tmp = (bd >> half_width) + (ad & mask_half) + (bc & mask_half) + raised_bit<mantissa_storage_type>(half_width - 1);
 
-			m_f = ac + (ad >> 32) + (bc >> 32) + (tmp >> 32);
-			m_e += rhs.m_e + 64;
+			m_f = ac + (ad >> half_width) + (bc >> half_width) + (tmp >> half_width);
+			m_e += rhs.m_e + bit_size<mantissa_storage_type>();
 
 			return *this;
 		}
 
+		/** \brief Non-destructive version of `diy_fp::operator*=()`. */
 		diy_fp operator*(const diy_fp& rhs) const noexcept
 		{
 			return diy_fp(*this) *= rhs;
 		}
 
+		/** \brief Increment (prefix) with mantissa overflow control. */
 		diy_fp& operator++() noexcept
 		{
 			if (m_f < std::numeric_limits<diy_fp::mantissa_storage_type>::max())
@@ -231,6 +322,7 @@ namespace floaxie
 			return *this;
 		}
 
+		/** \brief Postfix increment version. */
 		diy_fp operator++(int) noexcept
 		{
 			auto temp = *this;
@@ -238,6 +330,7 @@ namespace floaxie
 			return temp;
 		}
 
+		/** \brief Decrement (prefix) with mantissa underflow control. */
 		diy_fp& operator--() noexcept
 		{
 			if (m_f > 1)
@@ -253,6 +346,7 @@ namespace floaxie
 			return *this;
 		}
 
+		/** \brief Postfix decrement version. */
 		diy_fp operator--(int) noexcept
 		{
 			auto temp = *this;
@@ -260,16 +354,48 @@ namespace floaxie
 			return temp;
 		}
 
+		/** \brief Equality of `diy_fp` values.
+		 *
+		 * Just member-wise equality check.
+		 */
 		bool operator==(const diy_fp& d) const noexcept
 		{
 			return m_f == d.m_f && m_e == d.m_e;
 		}
 
+
+		/** \brief Inequality of `diy_fp` values.
+		 *
+		 * Negation of `diy_fp::operator==()` for consistency.
+		 */
 		bool operator!=(const diy_fp& d) const noexcept
 		{
 			return !operator==(d);
 		}
 
+		/** \brief Calculates boundary values (M+ and M-) for the specified
+		 * floating point value.
+		 *
+		 * Helper function for **Grisu2** algorithm, which first converts the
+		 * specified floating point value to `diy_fp` and then calculates lower
+		 * (M-) and higher (M+) boundaries of it and thus of original accurate
+		 * floating point value.
+		 *
+		 * These two boundary values define the range where all the values are
+		 * correctly rounded to the specified floating point value, so any
+		 * value within this range can be treated as correct representation of
+		 * the specified one.
+		 *
+		 * \tparam FloatType type of floating point value
+		 * \param d floating point value to calculate boundaries for
+		 *
+		 * \return `std::pair` of two `diy_fp` values, **M-** and **M+**,
+		 * respectively.
+		 *
+		 * \see [Printing Floating-Point Numbers Quickly and Accurately with
+		 * Integers]
+		 * (http://florian.loitsch.com/publications/dtoa-pldi2010.pdf)
+		 */
 		template<typename FloatType> static std::pair<diy_fp, diy_fp> boundaries(FloatType d) noexcept
 		{
 			static_assert(std::numeric_limits<FloatType>::is_iec559, "Only IEEE-754 floating point types are supported");
@@ -300,6 +426,13 @@ namespace floaxie
 			return result;
 		}
 
+		/** \brief Prints `diy_fp` value.
+		 *
+		 * \param os `std::basic_ostream` to print to
+		 * \param v `diy_fp` value to print
+		 *
+		 * \return `std::basic_ostream` with the \p **v** value printed.
+		 */
 		template<typename Ch, typename Alloc>
 		friend std::basic_ostream<Ch, Alloc>& operator<<(std::basic_ostream<Ch, Alloc>& os, const diy_fp& v)
 		{
