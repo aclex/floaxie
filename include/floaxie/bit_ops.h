@@ -44,7 +44,7 @@ namespace floaxie
 	}
 
 	template<typename FloatType,
-	typename NumericType =  typename integer_of_size<sizeof(FloatType)>::type>
+	typename NumericType = typename integer_of_size<sizeof(FloatType)>::type>
 	constexpr NumericType msb_value() noexcept
 	{
 		return raised_bit<NumericType>(bit_size<NumericType>() - 1);
