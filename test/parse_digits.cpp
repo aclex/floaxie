@@ -15,7 +15,7 @@ bool check_integer()
 	digit_parse_result dp;
 
 	const char str1[] = "12345";
-	dp = parse_digits<decimal_q, true, false>(str1);
+	dp = parse_digits<decimal_q, false>(str1);
 	std::cout << "value: " << dp.value << std::endl;
 	std::cout << "sign: " << dp.sign << std::endl;
 	std::cout << "K: " << dp.K << std::endl;
@@ -24,7 +24,7 @@ bool check_integer()
 	ret = dp.str_end == (str1 + strlen(str1)) && (dp.value == 12345) && dp.sign && dp.K == 0;
 
 	const char str2[] = "-12345";
-	dp = parse_digits<decimal_q, true, false>(str2);
+	dp = parse_digits<decimal_q, false>(str2);
 	std::cout << "value: " << dp.value << std::endl;
 	std::cout << "sign: " << dp.sign << std::endl;
 	std::cout << "K: " << dp.K << std::endl;
@@ -45,7 +45,7 @@ bool check_decimal_fraction()
 
 	const char str0[] = "0000123400.0000000000";
 	const diy_fp::mantissa_storage_type chk0 = 1234;
-	dp = parse_digits<decimal_q, true, false>(str0);
+	dp = parse_digits<decimal_q, false>(str0);
 
 	ret = dp.str_end == (str0 + strlen(str0)) && (dp.value == chk0) && dp.sign && dp.K == 2;
 	std::cout << "value: " << dp.value << std::endl;
@@ -54,7 +54,7 @@ bool check_decimal_fraction()
 
 	const char str1[] = "0000123400.05678900000";
 	const diy_fp::mantissa_storage_type chk1 = 123400056789;
-	dp = parse_digits<decimal_q, true, false>(str1);
+	dp = parse_digits<decimal_q, false>(str1);
 
 	ret = dp.str_end == (str1 + strlen(str1)) && (dp.value == chk1) && dp.sign && dp.K == -6;
 	std::cout << "value: " << dp.value << std::endl;
@@ -63,7 +63,7 @@ bool check_decimal_fraction()
 
 	const char str2[] = "-0.000123400000";
 	const diy_fp::mantissa_storage_type chk2 = 1234;
-	dp = parse_digits<decimal_q, true, false>(str2);
+	dp = parse_digits<decimal_q, false>(str2);
 	std::cout << "value: " << dp.value << std::endl;
 	std::cout << "sign: " << dp.sign << std::endl;
 	std::cout << "K: " << dp.K << std::endl;
@@ -72,7 +72,7 @@ bool check_decimal_fraction()
 
 	const char str3[] = "123.00000";
 	const diy_fp::mantissa_storage_type chk3 = 123;
-	dp = parse_digits<decimal_q, true, false>(str3);
+	dp = parse_digits<decimal_q, false>(str3);
 	std::cout << "value: " << dp.value << std::endl;
 	std::cout << "sign: " << dp.sign << std::endl;
 	std::cout << "K: " << dp.K << std::endl;

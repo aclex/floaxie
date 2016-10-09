@@ -30,18 +30,33 @@
 
 namespace floaxie
 {
+	/** \brief Maximum number of decimal digits mantissa of `diy_fp` can hold. */
 	constexpr std::size_t decimal_q(bit_size<diy_fp::mantissa_storage_type>() * lg_2);
 
+	/** \brief Maximum number of necessary binary digits of fraction part. */
 	constexpr std::size_t fraction_binary_digits(4);
+
+	/** \brief Maximum number of decimal digits of fraction part, which can be observed. */
 	constexpr std::size_t fraction_decimal_digits(4);
 
+	/** \brief Maximum length of input string (2 KB). */
 	constexpr std::size_t offset = 2048;
 
-	constexpr std::size_t frac_width(4);
-	constexpr std::size_t exp_width(3);
+	/** \brief Maximum number of decimal digits in the exponent value. */
+	constexpr std::size_t exponent_decimal_digits(3);
 
-	template<std::size_t kappa>
-	inline diy_fp::mantissa_storage_type extract_fraction_digits(const char* str)
+	/** \brief Extracts up to \p **kappa** decimal digits from fraction part.
+	 *
+	 * Extracts decimal digits from fraction part and returns it as numerator
+	 * value with denominator equal to \f$10^{\kappa}\f$.
+	 *
+	 * \tparam kappa maximum number of decimal digits to extract
+	 * \param str character buffer to extract from
+	 *
+	 * \return Numerator value of the extracted decimal digits (i.e. as they
+	 * are actually written after the decimal point).
+	 */
+	template<std::size_t kappa> inline diy_fp::mantissa_storage_type extract_fraction_digits(const char* str)
 	{
 		std::array<unsigned char, kappa> parsed_digits;
 		parsed_digits.fill(0);
@@ -58,22 +73,51 @@ namespace floaxie
 		diy_fp::mantissa_storage_type result(0);
 		std::size_t pow(0);
 		for (auto rit = parsed_digits.rbegin(); rit != parsed_digits.rend(); ++rit)
-			result += (*rit) * seq_pow<diy_fp::mantissa_storage_type, 10, frac_width>(pow++);
+			result += (*rit) * seq_pow<diy_fp::mantissa_storage_type, 10, kappa>(pow++);
 
 		return result;
 	}
 
+	/** \brief Return structure for `parse_digits`. */
 	struct digit_parse_result
 	{
+		/** \brief Pre-initializes members to sane values. */
 		digit_parse_result() : value(0), K(0), sign(true), frac(0) { }
+
+		/** \brief Parsed mantissa value. */
 		diy_fp::mantissa_storage_type value;
+
+		/** \brief Decimal exponent, as calculated by exponent part and decimal
+		 * point position.
+		 */
 		int K;
+
+		/** \brief Pointer to the memory after the parsed part of the buffer. */
 		const char* str_end;
+
+		/** \brief Sign of the value. */
 		bool sign;
+
+		/** \brief Binary numerator of fractional part, to help correct rounding. */
 		unsigned char frac;
 	};
 
-	template<std::size_t kappa, bool no_dot, bool calc_frac> inline digit_parse_result parse_digits(const char* str)
+	/** \brief Unified method to extract and parse digits in one pass.
+	 *
+	 * Goes through the string representation of the floating point value in
+	 * the specified buffer, detects the meaning of each digit in its position
+	 * and calculates main parts of floating point value — mantissa, exponent,
+	 * sign, fractional part.
+	 *
+	 * \tparam kappa maximum number of digits to expect
+	 * \tparam calc_frac if `true`, try to calculate fractional part, if any
+	 *
+	 * \param str Character buffer with floating point value representation to
+	 * parse.
+	 *
+	 * \return `digit_parse_result` with the parsing results.
+	 */
+	template<std::size_t kappa, bool calc_frac> inline digit_parse_result parse_digits(const char* str)
 	{
 		digit_parse_result ret;
 
@@ -127,7 +171,7 @@ namespace floaxie
 				{
 					if (!frac_calculated)
 					{
-						auto tail = extract_fraction_digits<frac_width>(str + pos - zero_substring_length);
+						auto tail = extract_fraction_digits<fraction_decimal_digits>(str + pos - zero_substring_length);
 						ret.frac = convert_numerator<fraction_decimal_digits, fraction_binary_digits>(tail);
 
 						frac_calculated = true;
@@ -171,19 +215,38 @@ namespace floaxie
 		return ret;
 	}
 
+	/** \brief Return structure for `parse_mantissa`. */
 	struct mantissa_parse_result
 	{
+		/** \brief Calculated mantissa value. */
 		diy_fp value;
+
+		/** \brief Corrected value of decimal exponent value */
 		int K;
+
+		/** \brief Pointer to the memory after the parsed part of the buffer. */
 		const char* str_end;
+
+		/** \brief Sign of the value. */
 		bool sign;
 	};
 
+	/** \brief Tides up results of `parse_digits` for **Krosh** to use.
+	 *
+	 * Packs mantissa value into `diy_fp` structure and performs the necessary
+	 * rounding up according to the fractional part value.
+	 *
+	 * \param str Character buffer with floating point value representation to
+	 * parse.
+	 *
+	 * \return `mantissa_parse_result` structure with the results of parsing
+	 * and corrections.
+	 */
 	inline mantissa_parse_result parse_mantissa(const char* str)
 	{
 		mantissa_parse_result ret;
 
-		const auto& digits_parts(parse_digits<decimal_q, false, true>(str));
+		const auto& digits_parts(parse_digits<decimal_q, true>(str));
 
 		ret.value = diy_fp(digits_parts.value, 0);
 
@@ -215,12 +278,23 @@ namespace floaxie
 		return ret;
 	}
 
+	/** \brief Return structure for `parse_exponent`. */
 	struct exponent_parse_result
 	{
+		/** \brief Value of the exponent. */
 		int value;
+
+		/** \brief Pointer to the memory after the parsed part of the buffer. */
 		const char* str_end;
 	};
 
+	/** \brief Parses exponent part of the floating point string representation.
+	 *
+	 * \param str Exponent part of character buffer with floating point value
+	 * representation to parse.
+	 *
+	 * \return `exponent_parse_result` structure with parse results.
+	 */
 	inline exponent_parse_result parse_exponent(const char* str)
 	{
 		exponent_parse_result ret;
@@ -233,9 +307,9 @@ namespace floaxie
 		{
 			++str;
 
-			const auto& digit_parts(parse_digits<exp_width, false, false>(str));
+			const auto& digit_parts(parse_digits<exponent_decimal_digits, false>(str));
 
-			ret.value = digit_parts.value * seq_pow<int, 10, exp_width>(digit_parts.K);
+			ret.value = digit_parts.value * seq_pow<int, 10, exponent_decimal_digits>(digit_parts.K);
 
 			if (!digit_parts.sign)
 				ret.value = -ret.value;
@@ -246,13 +320,36 @@ namespace floaxie
 		return ret;
 	}
 
+	/** \brief Return structure, containing **Krosh** algorithm results.
+	 *
+	 * \tparam FloatType destination type of floating point value to store the
+	 * results.
+	 */
 	template<typename FloatType> struct krosh_result
 	{
+		/** \brief The result floating point value, downsampled to the defined
+		 * floating point type.
+		 */
 		FloatType value;
+
+		/** \brief Pointer to the memory after the parsed part of the buffer. */
 		const char* str_end;
+
+		/** \brief Flag indicating if the result ensured to be rounded correctly. */
 		bool is_accurate;
 	};
 
+	/** \brief Implements **Krosh** algorithm.
+	 *
+	 * \tparam FloatType destination type of floating point value to store the
+	 * results.
+	 *
+	 * \param str Character buffer with floating point value
+	 * representation to parse.
+	 *
+	 * \return `krosh_result` structure with all the results of **Krosh**
+	 * algorithm.
+	 */
 	template<typename FloatType> krosh_result<FloatType> krosh(const char* str)
 	{
 		krosh_result<FloatType> ret;
