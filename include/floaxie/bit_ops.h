@@ -24,25 +24,57 @@
 #ifndef FLOAXIE_BIT_OPS_H
 #define FLOAXIE_BIT_OPS_H
 
-#include <cstddef>
 #include <limits>
+#include <algorithm>
+#include <cstddef>
 #include <cassert>
 
 #include <floaxie/integer_of_size.h>
 
 namespace floaxie
 {
+	/** \brief Calculates size of type in bits in compile time.
+	 *
+	 * \tparam NumericType type to calculate size in bits of
+	 *
+	 * \return Type size in bits.
+	 */
 	template<typename NumericType> constexpr std::size_t bit_size() noexcept
 	{
 		return sizeof(NumericType) * std::numeric_limits<unsigned char>::digits;
 	}
 
+	/** \brief Returns a value with bit of the specified power raised.
+	 *
+	 * Calculates a value, which equals to 2 in the specified power, i.e. with
+	 * bit at \p `power` position is `1` and all the remaining bits are `0`.
+	 *
+	 * \tparam NumericType type to store the calculated value
+	 *
+	 * \param power power (0-based index, counting right to left) of bit to
+	 * raise
+	 *
+	 * \return Value of \p **NumericType** with \p **power**-th bit is `1` and
+	 * all the remaining bits are `0`.
+	 */
 	template<typename NumericType> constexpr NumericType raised_bit(std::size_t power)
 	{
 		assert(power < bit_size<NumericType>());
 		return NumericType(1) << power;
 	}
 
+	/** \brief Returns Most Significant Bit (MSB) value for the specified type.
+	 *
+	 * Calculates a value, which is equal to the value of Most
+	 * Significant Bit of the integer type, which has the same length, as the
+	 * specified one. The left most bit of the calculated value is equal to
+	 * `1`, and the remaining bits are `0`.
+	 *
+	 * \tparam FloatType type to calculate MSB value for
+	 * \tparam NumericType integer type of the same size, as \p **FloatType**
+	 *
+	 * \return Value of Most Significant Bit (MSB).
+	 */
 	template<typename FloatType,
 	typename NumericType = typename integer_of_size<sizeof(FloatType)>::type>
 	constexpr NumericType msb_value() noexcept
@@ -50,6 +82,17 @@ namespace floaxie
 		return raised_bit<NumericType>(bit_size<NumericType>() - 1);
 	}
 
+	/** \brief Returns maximum unsigned integer value for the specified type.
+	 *
+	 * Calculates maximum value (using `std::numeric_limits`) of the integer
+	 * type, which has the same length, as the specified one. Thus, all bits
+	 * of the calculated value are equal to `1`.
+	 *
+	 * \tparam FloatType type to calculate MSB value for
+	 * \tparam NumericType integer type of the same size, as \p **FloatType**
+	 *
+	 * \return Maximum value of size the same as of the specified type.
+	 */
 	template<typename FloatType,
 	typename NumericType = typename integer_of_size<sizeof(FloatType)>::type>
 	constexpr NumericType max_integer_value() noexcept
@@ -57,84 +100,105 @@ namespace floaxie
 		return std::numeric_limits<NumericType>::max();
 	}
 
+	/** \brief Masks `n`-th bit of the specified value.
+	 *
+	 * Calculates a mask standing for the `n`-th bit, performs bitwise **AND**
+	 * operation and returns the value of it.
+	 *
+	 * \param value the value, of which the specified bit is returned
+	 * \param power power (0-based right-to-left index) of bit to return
+	 *
+	 * \return Integer value, which has \p `power`-th bit of the \p **value**
+	 * and the remaining bits equal to `0`.
+	 *
+	 */
 	template<typename NumericType> constexpr bool nth_bit(NumericType value, std::size_t power) noexcept
 	{
 		return value & raised_bit<NumericType>(power);
 	}
 
+	/** \brief Returns Most Significant Bit (MSB) of the specified value.
+	 *
+	 * Masks the left most bit of the given value, performs bitwise **AND**
+	 * operation with the mask and the value and returns the result.
+	 *
+	 * \tparam NumericType type of the value
+	 *
+	 * \param value value to get the highest bit of
+	 *
+	 * \return Integer value, which left most bit of the \p **value** and the
+	 * remaining bits equal to `0`.
+	 */
 	template<typename NumericType> constexpr bool highest_bit(NumericType value) noexcept
 	{
 		return nth_bit(value, bit_size<NumericType>() - 1);
 	}
 
+	/** \brief Returns mask of \p **n** bits from the right.
+	 *
+	 * \tparam NumericType type of the returned value
+	 * \param n number of bits from the right to mask
+	 *
+	 * \return Integer value with \p **n** right bits equal to `1` and the
+	 * remaining bits equal to `0`.
+	 */
 	template<typename NumericType> constexpr NumericType mask(std::size_t n) noexcept
 	{
 		return n < bit_size<NumericType>() ? raised_bit<NumericType>(n) - 1 : std::numeric_limits<NumericType>::max();
 	}
 
-	template<typename NumericType> constexpr NumericType mask(std::size_t begin_bit_no, std::size_t end_bit_no) noexcept
-	{
-		return mask<NumericType>(end_bit_no) ^ mask<NumericType>(begin_bit_no);
-	}
-
-	template<typename NumericType> constexpr NumericType peek(NumericType value, std::size_t begin_bit_no, std::size_t end_bit_no) noexcept
-	{
-		return (value & mask<NumericType>(begin_bit_no, end_bit_no)) >> begin_bit_no;
-	}
-
-	template<typename NumericType> constexpr NumericType prefix(NumericType value, std::size_t n) noexcept
-	{
-		return n != bit_size<NumericType>() ? value >> (bit_size<NumericType>() - n) : value;
-	}
-
-	template<typename NumericType> constexpr NumericType suffix(NumericType value, std::size_t n) noexcept
-	{
-		return n != bit_size<NumericType>() ? value & mask<NumericType>(n) : value;
-	}
-
-	template<typename NumericType> inline std::size_t suffix_length(NumericType value, bool sample) noexcept
-	{
-		std::size_t result(0);
-		while ((value & 0x1ul) == sample)
-		{
-			++result;
-			value >>= 1;
-		}
-
-		return result;
-	}
-
+	/** \brief Rectified linear function.
+	 *
+	 * Returns the argument (\p **value**), if it's positive and `0` otherwise.
+	 *
+	 * \param value the argument
+	 *
+	 * \return \p **value**, if \p **value** > `0`, `0` otherwise.
+	 *
+	 */
 	template<typename NumericType> constexpr typename std::make_unsigned<NumericType>::type positive_part(NumericType value) noexcept
 	{
-		return value > 0 ? value : 0;
+		return std::max(0, value);
 	}
 
-	template<typename NumericType> constexpr NumericType abs_diff(NumericType a, NumericType b) noexcept
-	{
-		return a > b ? a - b : b - a;
-	}
-
+	/** \brief Return structure for `round_up` function. */
 	struct round_result
 	{
+		/** \brief Round up result — flag indicating if the value should be
+		 *rounded up (i.e. incremented).
+		 */
 		bool value;
+		/** \brief Flag indicating if the rounding was accurate. */
 		bool is_accurate;
 	};
 
-	template<typename NumericType> inline round_result round_up_fast(NumericType last_bits, std::size_t round_to_power) noexcept
+	/** \brief Detects if rounding up should be done.
+	 *
+	 * Applies IEEE algorithm of rounding up detection. The rounding criteria
+	 * requires, that rounding bit (the bit to the right of target position,
+	 * which rounding is being performed to) equals to `1`, and one of the
+	 * following conditions is true:
+	 * - at least one bit to the right of the rounding bit equals to `1`
+	 * - the bit in the target position equals to `1`
+	 *
+	 * \tparam NumericType type of \p **last_bits** parameter (auto-calculated)
+	 *
+	 * \param last_bits right suffix of the value, where rounding takes place
+	 * \param round_to_power the power (0-based right-to-left index) of the
+	 * target position (which rounding is being performed to)
+	 *
+	 * \returns `round_result` structure with the rounding decision.
+	 */
+	template<typename NumericType> inline round_result round_up(NumericType last_bits, std::size_t round_to_power) noexcept
 	{
 		round_result ret;
 
 		const NumericType round_bit(raised_bit<NumericType>(round_to_power - 1));
 		const NumericType check_mask(mask<NumericType>(round_to_power + 1) ^ round_bit);
-		ret.is_accurate = suffix(last_bits, round_to_power) != round_bit;
+		ret.is_accurate = (last_bits & mask<NumericType>(round_to_power)) != round_bit;
 		ret.value = (last_bits & round_bit) && (last_bits & check_mask);
 
 		return ret;
-	}
-
-	template<typename NumericType> inline round_result round_up(NumericType last_bits, std::size_t round_to_power) noexcept
-	{
-		return round_up_fast(last_bits, round_to_power);
 	}
 }
 
