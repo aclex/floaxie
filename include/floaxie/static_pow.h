@@ -107,7 +107,7 @@ namespace floaxie
 		/** \brief Instance of the resulting `std::array` filled in with
 		 * elements from the specified `std::integer_sequence` in compile time.
 		 */
-		static constexpr type value = type{Ints...};
+		static constexpr type value = type{{Ints...}};
 	};
 
 	/** \brief Creates `std::integer_sequence` with sequence of powers of
