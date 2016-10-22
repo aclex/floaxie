@@ -200,6 +200,17 @@ namespace floaxie
 
 		return ret;
 	}
+
+	/** \brief `constexpr` version of `std::abs`, as the latter lacks `constepxr`.
+	 *
+	 * And is really not `constexpr` in e.g. Clang.
+	 *
+	 * \returns absolute value of the specified value.
+	 */
+	template<typename NumericType> constexpr NumericType constexpr_abs(NumericType value)
+	{
+		return NumericType(0) < value ? value : -value;
+	}
 }
 
 #endif // FLOAXIE_BIT_OPS_H

@@ -354,6 +354,9 @@ namespace floaxie
 	{
 		krosh_result<FloatType> ret;
 
+		static_assert(sizeof(FloatType) <= sizeof(diy_fp::mantissa_storage_type),
+			"Only floating point types no longer, than 64 bits are currently supported.");
+
 		auto mp(parse_mantissa(str));
 		diy_fp& w(mp.value);
 

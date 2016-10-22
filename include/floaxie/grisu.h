@@ -37,6 +37,7 @@
 #include <floaxie/k_comp.h>
 #include <floaxie/static_pow.h>
 #include <floaxie/integer_of_size.h>
+#include <floaxie/bit_ops.h>
 
 namespace floaxie
 {
@@ -211,8 +212,8 @@ namespace floaxie
 	 */
 	template<int alpha, int gamma> inline void digit_gen(const diy_fp& Mp, const diy_fp& Mm, char* buffer, int* len, int* K) noexcept
 	{
-		static_assert(std::abs(alpha) >= bit_size<diy_fp::mantissa_storage_type>() / 2 &&
-			std::abs(gamma) >= bit_size<diy_fp::mantissa_storage_type>() / 2,
+		static_assert(constexpr_abs(alpha) >= bit_size<diy_fp::mantissa_storage_type>() / 2 &&
+			constexpr_abs(gamma) >= bit_size<diy_fp::mantissa_storage_type>() / 2,
 			"Current implementation supports only α and γ, which absolute values are equal or higher, "
 			"than a half of integer mantissa bit size (typically 32) for performance reasons.");
 
@@ -244,6 +245,9 @@ namespace floaxie
 	{
 		static_assert(alpha <= gamma - 3,
 			"It's imposed that γ ⩾ α + 3, since otherwise it's not always possible to find a proper decimal cached power");
+
+		static_assert(sizeof(FloatType) <= sizeof(diy_fp::mantissa_storage_type),
+			"Only floating point types no longer, than 64 bits are currently supported.");
 
 		std::pair<diy_fp, diy_fp>&& w(diy_fp::boundaries(v));
 		diy_fp &w_m(w.first), &w_p(w.second);
