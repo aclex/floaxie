@@ -47,8 +47,8 @@ namespace floaxie
 	 *
 	 * \tparam FloatType target floating point type to store results.
 	 * \tparam FallbackCallable fallback conversion function type, in case of
-	 * Krosh is unsure if the result is correctly rounded (default is strtof()
-	 * for floats, strtod() for doubles, strtold() for long doubles).
+	 * Krosh is unsure if the result is correctly rounded (default is `strtof()`
+	 * for `float`'s, `strtod()` for `double`'s, `strtold()` for `long double`'s).
 	 *
 	 * \param str buffer containing the string representation of the value.
 	 * \param str_end out parameter, which will contain a pointer to first
