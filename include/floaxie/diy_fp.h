@@ -171,9 +171,11 @@ namespace floaxie
 
 			assert(denorm_exp < my_mantissa_size);
 
-			mantissa_storage_type parts;
 			const std::size_t shift_amount(std::max(denorm_exp, lsb_pow));
-			parts = (m_e + shift_amount + exponent_bias - (denorm_exp > lsb_pow)) << mantissa_bit_size;
+
+			mantissa_storage_type parts = m_e + shift_amount + exponent_bias - (denorm_exp > lsb_pow);
+			parts <<= mantissa_bit_size;
+
 			const auto& round(round_up(f, shift_amount));
 			parts |= ((f >> shift_amount) + round.value) & mantissa_mask;
 
