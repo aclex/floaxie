@@ -2,6 +2,11 @@ floaxie
 =======
 Floaxie is C++14 header-only library for printing floating point values of arbitrary precision (`float`, `double` etc.) and parsing their textual representation back again (in ordinary or exponent notation).
 
+Compiler compatibility
+----------------------
+- GCC 6
+- Clang 3.7
+
 Printing
 --------
 **Grisu2** algorithm is adopted for printing floating point values. It is fast printing algorithm described by Florian Loitsch in his [Printing Floating-Point Numbers Quickly and Accurately with Integers](http://florian.loitsch.com/publications/dtoa-pldi2010.pdf) paper. **Grisu2** is chosen as probably the fastest **grisu** version, for cases, where shortest possible representation in 100% of cases is not ultimately important. Still it guarantees the best possible efficiency of more, than 99%.
