@@ -4,8 +4,9 @@ Floaxie is C++14 header-only library for printing floating point values of arbit
 
 Compiler compatibility
 ----------------------
-- GCC 6
-- Clang 3.7
+- [x] GCC 6
+- [x] Clang 3.7
+- [ ] Visual Studio 2015 update 3 not yet, due to the [constexpr variable bug](https://connect.microsoft.com/VisualStudio/feedback/details/2849367/initialized-constexpr-variable-declaration-is-not-allowed-in-constexpr-function-body)
 
 Printing
 --------
