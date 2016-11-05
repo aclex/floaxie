@@ -212,8 +212,8 @@ namespace floaxie
 	 */
 	template<int alpha, int gamma> inline void digit_gen(const diy_fp& Mp, const diy_fp& Mm, char* buffer, int* len, int* K) noexcept
 	{
-		static_assert(constexpr_abs(alpha) >= bit_size<diy_fp::mantissa_storage_type>() / 2 &&
-			constexpr_abs(gamma) >= bit_size<diy_fp::mantissa_storage_type>() / 2,
+		static_assert(static_cast<std::size_t>(constexpr_abs(alpha)) >= bit_size<diy_fp::mantissa_storage_type>() / 2 &&
+			static_cast<std::size_t>(constexpr_abs(gamma)) >= bit_size<diy_fp::mantissa_storage_type>() / 2,
 			"Current implementation supports only α and γ, which absolute values are equal or higher, "
 			"than a half of integer mantissa bit size (typically 32) for performance reasons.");
 
