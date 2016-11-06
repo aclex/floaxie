@@ -49,6 +49,8 @@ namespace floaxie
 	 * \tparam FallbackCallable fallback conversion function type, in case of
 	 * Krosh is unsure if the result is correctly rounded (default is `strtof()`
 	 * for `float`'s, `strtod()` for `double`'s, `strtold()` for `long double`'s).
+	 * \tparam CharType character type (typically `char` or `wchar_t`) the input
+	 * string \p **str** consists of.
 	 *
 	 * \param str buffer containing the string representation of the value.
 	 * \param str_end out parameter, which will contain a pointer to first
@@ -62,9 +64,10 @@ namespace floaxie
 	template
 	<
 		typename FloatType,
-		typename FallbackCallable = FloatType (const char*, char**)
+		typename CharType,
+		typename FallbackCallable = FloatType (const CharType*, CharType**)
 	>
-	inline FloatType atof(const char* str, char** str_end, FallbackCallable fallback_func = default_fallback<FloatType, char>)
+	inline FloatType atof(const CharType* str, CharType** str_end, FallbackCallable fallback_func = default_fallback<FloatType, CharType>)
 	{
 		const auto& cr(krosh<FloatType>(str));
 
@@ -75,7 +78,7 @@ namespace floaxie
 			return fallback_func(str, str_end);
 
 		if (str_end)
-			*str_end = const_cast<char*>(cr.str_end);
+			*str_end = const_cast<CharType*>(cr.str_end);
 
 		return cr.value;
 	}

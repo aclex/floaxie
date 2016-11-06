@@ -38,6 +38,7 @@
 #include <floaxie/static_pow.h>
 #include <floaxie/integer_of_size.h>
 #include <floaxie/bit_ops.h>
+#include <floaxie/memwrap.h>
 
 namespace floaxie
 {
@@ -87,30 +88,21 @@ namespace floaxie
 		return std::numeric_limits<half_of_mantissa_storage_type>::digits10 + std::numeric_limits<typename diy_fp::mantissa_storage_type>::digits10;
 	}
 
-	/** \brief More concrete `digit_gen()` function template.
-	 *
-	 * This template implies the requirements of more general `digit_gen()`
-	 * template to be already satisfied and is parameterized only with sign of
-	 * exponent flag.
-	 *
-	 * \tparam positive_exponent flag if the exponent of the value is positive
-	 *
-	 * \see [Printing Floating-Point Numbers Quickly and Accurately with
-	 * Integers]
-	 * (http://florian.loitsch.com/publications/dtoa-pldi2010.pdf)
-	 */
-	template<bool positive_exponent> inline void digit_gen(const diy_fp& Mp, const diy_fp& Mm, char* buffer, int* len, int* K) noexcept;
-
-	/** \brief Specialization for the case of negative exponent.
+/** \brief Free function of digit generation for the case of α < 0 and γ < 0.
 	 *
 	 * This is probably the fastest `digit_gen()` algorithm, which implies,
 	 * that both **M+** and **M-** exponents are not positive.
 	 *
+	 * Implemented in free function to solve the problem of partial specialization
+	 * of `digit_gen<bool, CharType>()`.
+	 *
+	 * \tparam CharType character type (typically `char` or `wchar_t`) of \p **buffer**.
+	 *
 	 * \see [Printing Floating-Point Numbers Quickly and Accurately with
 	 * Integers]
 	 * (http://florian.loitsch.com/publications/dtoa-pldi2010.pdf)
 	 */
-	template<> inline void digit_gen<false>(const diy_fp& Mp, const diy_fp& Mm, char* buffer, int* len, int* K) noexcept
+	template<typename CharType> inline void digit_gen_negative(const diy_fp& Mp, const diy_fp& Mm, CharType* buffer, int* len, int* K) noexcept
 	{
 		assert(Mp.exponent() <= 0);
 
@@ -153,7 +145,7 @@ namespace floaxie
 			}
 			else
 			{
-				std::memset(buffer + (*len), '0', kappa);
+				wrap::memset(buffer + (*len), CharType('0'), kappa);
 				(*len) += kappa;
 			}
 		}
@@ -179,6 +171,51 @@ namespace floaxie
 		*K -= kappa;
 	}
 
+	/** \brief More concrete `digit_gen()` function template.
+	 *
+	 * This template implies the requirements of more general `digit_gen()`
+	 * template to be already satisfied and is parameterized only with sign of
+	 * exponent flag.
+	 *
+	 * \tparam positive_exponent flag if the exponent of the value is positive
+	 * \tparam CharType character type (typically `char` or `wchar_t`) of the
+	 * output buffer \p **buffer**
+	 *
+	 * \see `digit_gen()`
+	 * \see [Printing Floating-Point Numbers Quickly and Accurately with
+	 * Integers]
+	 * (http://florian.loitsch.com/publications/dtoa-pldi2010.pdf)
+	 */
+	template<bool positive_exponent, typename CharType> inline void digit_gen(const diy_fp& Mp, const diy_fp& Mm, CharType* buffer, int* len, int* K) noexcept;
+
+	/** \brief Specialization for the case of negative exponent and `char` character type.
+	 *
+	 * This is probably the fastest `digit_gen()` algorithm, which implies,
+	 * that both **M+** and **M-** exponents are not positive.
+	 *
+	 * \see [Printing Floating-Point Numbers Quickly and Accurately with
+	 * Integers]
+	 * (http://florian.loitsch.com/publications/dtoa-pldi2010.pdf)
+	 */
+	template<> inline void digit_gen<false, char>(const diy_fp& Mp, const diy_fp& Mm, char* buffer, int* len, int* K) noexcept
+	{
+		digit_gen_negative(Mp, Mm, buffer, len, K);
+	}
+
+	/** \brief Specialization for the case of negative exponent and `wchar_t` character type.
+	 *
+	 * This is probably the fastest `digit_gen()` algorithm, which implies,
+	 * that both **M+** and **M-** exponents are not positive.
+	 *
+	 * \see [Printing Floating-Point Numbers Quickly and Accurately with
+	 * Integers]
+	 * (http://florian.loitsch.com/publications/dtoa-pldi2010.pdf)
+	 */
+	template<> inline void digit_gen<false, wchar_t>(const diy_fp& Mp, const diy_fp& Mm, wchar_t* buffer, int* len, int* K) noexcept
+	{
+		digit_gen_negative(Mp, Mm, buffer, len, K);
+	}
+
 
 	/** \brief Digit generation function template.
 	 *
@@ -195,6 +232,8 @@ namespace floaxie
 	 *
 	 * \tparam alpha α value of **Grisu** algorithm
 	 * \tparam gamma γ value of **Grisu** algorithm
+	 * \tparam CharType character type (typically `char` or `wchar_t`) of the
+	 * output buffer \p **buffer**
 	 *
 	 * \param Mp **M+** value (right boundary)
 	 * \param Mm **M-** value (left boundary)
@@ -210,7 +249,8 @@ namespace floaxie
 	 * Integers]
 	 * (http://florian.loitsch.com/publications/dtoa-pldi2010.pdf)
 	 */
-	template<int alpha, int gamma> inline void digit_gen(const diy_fp& Mp, const diy_fp& Mm, char* buffer, int* len, int* K) noexcept
+	template<int alpha, int gamma,
+	typename CharType> inline void digit_gen(const diy_fp& Mp, const diy_fp& Mm, CharType* buffer, int* len, int* K) noexcept
 	{
 		static_assert(static_cast<std::size_t>(constexpr_abs(alpha)) >= bit_size<diy_fp::mantissa_storage_type>() / 2 &&
 			static_cast<std::size_t>(constexpr_abs(gamma)) >= bit_size<diy_fp::mantissa_storage_type>() / 2,
@@ -227,6 +267,8 @@ namespace floaxie
 	 * \tparam gamma γ value of **Grisu** algorithm
 	 * \tparam FloatType type of input floating-point value (calculated by type
 	 * of \p **v** parameter)
+	 * \tparam CharType character type (typically `char` or `wchar_t`) of the
+	 * output buffer \p **buffer**
 	 *
 	 * \param v floating point value to print
 	 * \param buffer large enough character buffer to print to
@@ -241,7 +283,8 @@ namespace floaxie
 	 * Integers]
 	 * (http://florian.loitsch.com/publications/dtoa-pldi2010.pdf)
 	 */
-	template<int alpha, int gamma, typename FloatType> inline void grisu2(FloatType v, char* buffer, int* length, int* K) noexcept
+	template<int alpha, int gamma,
+	typename FloatType, typename CharType> inline void grisu2(FloatType v, CharType* buffer, int* length, int* K) noexcept
 	{
 		static_assert(alpha <= gamma - 3,
 			"It's imposed that γ ⩾ α + 3, since otherwise it's not always possible to find a proper decimal cached power");
