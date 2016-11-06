@@ -31,6 +31,7 @@
 
 #include <floaxie/static_pow.h>
 #include <floaxie/print.h>
+#include <floaxie/memwrap.h>
 
 namespace floaxie
 {
@@ -74,10 +75,14 @@ namespace floaxie
 	}
 
 	/** \brief Prints decimal exponent value.
+	 *
+	 * \tparam CharType character type (typically `char` or `wchar_t`) of the
+	 * output buffer \p **buffer**
+	 *
 	 * \param K decimal exponent value
 	 * \param buffer character buffer to print to
 	 */
-	inline void fill_exponent(unsigned int K, char* buffer) noexcept
+	template<typename CharType> inline void fill_exponent(unsigned int K, CharType* buffer) noexcept
 	{
 		const unsigned char hundreds = K / 100;
 		K %= 100;
@@ -94,6 +99,9 @@ namespace floaxie
 	/** \brief Prints exponent (*scientific*) part of value representation in
 	 * decimal exponent format.
 	 *
+	 * \tparam CharType character type (typically `char` or `wchar_t`) of the
+	 * output buffer \p **buffer**
+	 *
 	 * \param buffer character buffer with properly printed mantissa
 	 * \param len output parameter to return the length of printed
 	 * representation
@@ -101,13 +109,13 @@ namespace floaxie
 	 *
 	 * \see `print_decimal()`
 	 */
-	inline void print_scientific(char* buffer, const unsigned int len, const int dot_pos) noexcept
+	template<typename CharType> inline void print_scientific(CharType* buffer, const unsigned int len, const int dot_pos) noexcept
 	{
 		const int K = dot_pos - 1;
 		if (len > 1)
 		{
 			/* leave the first digit. then add a '.' and at the end 'e...' */
-			std::memmove(buffer + 2, buffer + 1, len - 1);
+			wrap::memmove(buffer + 2, buffer + 1, len - 1);
 			buffer[1] = '.';
 			buffer += len;
 		}
@@ -125,11 +133,14 @@ namespace floaxie
 	 * Tides up the printed digits in \p **buffer**, adding leading zeros,
 	 * placing the decimal point into the proper place etc.
 	 *
+	 * \tparam CharType character type (typically `char` or `wchar_t`) of the
+	 * output buffer \p **buffer**
+	 *
 	 * \param buffer character buffer with printed digits
 	 * \param len length of current representation in \p **buffer**
 	 * \param k decimal exponent of the value
 	 */
-	inline void print_decimal(char* buffer, const unsigned int len, const int k) noexcept
+	template<typename CharType> inline void print_decimal(CharType* buffer, const unsigned int len, const int k) noexcept
 	{
 		const int dot_pos = static_cast<int>(len) + k;
 
@@ -144,9 +155,9 @@ namespace floaxie
 
 		const unsigned int term_pos = len + right_offset + (left_shift_dest - left_shift_src);
 
-		std::memmove(buffer + left_shift_dest, buffer + left_shift_src, left_shift_len);
-		std::memset(buffer, '0', left_offset);
-		std::memset(buffer + len, '0', right_offset);
+		wrap::memmove(buffer + left_shift_dest, buffer + left_shift_src, left_shift_len);
+		wrap::memset(buffer, CharType('0'), left_offset);
+		wrap::memset(buffer + len, CharType('0'), right_offset);
 		buffer[actual_dot_pos] = '.';
 		buffer[term_pos] = '\0';
 	}
@@ -158,6 +169,8 @@ namespace floaxie
 	 * \tparam decimal_scientific_threshold the maximum number of digits in the
 	 * string representation, when decimal format can be used (otherwise
 	 * decimal exponent or *scientific* format is used)
+	 * \tparam CharType character type (typically `char` or `wchar_t`) of the
+	 * output buffer \p **buffer**
 	 *
 	 * \param buffer character buffer with printed digits
 	 * \param len length of current representation in \p **buffer**
@@ -166,8 +179,8 @@ namespace floaxie
 	 * \see `print_decimal()`
 	 * \see `print_scientific()`
 	 */
-	template<std::size_t decimal_scientific_threshold>
-	inline void prettify(char* buffer, const unsigned int len, const int k) noexcept
+	template<std::size_t decimal_scientific_threshold, typename CharType>
+	inline void prettify(CharType* buffer, const unsigned int len, const int k) noexcept
 	{
 		/* v = buffer * 10 ^ k
 			dot_pos is such that 10 ^ (dot_pos - 1) <= v < 10 ^ dot_pos

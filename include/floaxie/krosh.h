@@ -51,19 +51,22 @@ namespace floaxie
 	 * value with denominator equal to \f$10^{\kappa}\f$.
 	 *
 	 * \tparam kappa maximum number of decimal digits to extract
+	 * \tparam CharType character type (typically `char` or `wchar_t`) \p **str**
+	 * consists of
+	 *
 	 * \param str character buffer to extract from
 	 *
 	 * \return Numerator value of the extracted decimal digits (i.e. as they
 	 * are actually written after the decimal point).
 	 */
-	template<std::size_t kappa> inline diy_fp::mantissa_storage_type extract_fraction_digits(const char* str)
+	template<std::size_t kappa, typename CharType> inline diy_fp::mantissa_storage_type extract_fraction_digits(const CharType* str)
 	{
 		std::array<unsigned char, kappa> parsed_digits;
 		parsed_digits.fill(0);
 
 		for (std::size_t pos = 0; pos < kappa; ++pos)
 		{
-			const char c = str[pos] - '0';
+			const auto c = str[pos] - '0';
 			if (c >= 0 && c <= 9)
 				parsed_digits[pos] = c;
 			else
@@ -78,8 +81,11 @@ namespace floaxie
 		return result;
 	}
 
-	/** \brief Return structure for `parse_digits`. */
-	struct digit_parse_result
+	/** \brief Return structure for `parse_digits`.
+	 *
+	 * \tparam CharType character type (typically `char` or `wchar_t`) used
+	 */
+	template<typename CharType> struct digit_parse_result
 	{
 		/** \brief Pre-initializes members to sane values. */
 		digit_parse_result() : value(0), K(0), sign(true), frac(0) { }
@@ -93,7 +99,7 @@ namespace floaxie
 		int K;
 
 		/** \brief Pointer to the memory after the parsed part of the buffer. */
-		const char* str_end;
+		const CharType* str_end;
 
 		/** \brief Sign of the value. */
 		bool sign;
@@ -111,15 +117,17 @@ namespace floaxie
 	 *
 	 * \tparam kappa maximum number of digits to expect
 	 * \tparam calc_frac if `true`, try to calculate fractional part, if any
+	 * \tparam CharType character type (typically `char` or `wchar_t`) \p **str**
+	 * consists of
 	 *
 	 * \param str Character buffer with floating point value representation to
 	 * parse.
 	 *
 	 * \return `digit_parse_result` with the parsing results.
 	 */
-	template<std::size_t kappa, bool calc_frac> inline digit_parse_result parse_digits(const char* str)
+	template<std::size_t kappa, bool calc_frac, typename CharType> inline digit_parse_result<CharType> parse_digits(const CharType* str)
 	{
-		digit_parse_result ret;
+		digit_parse_result<CharType> ret;
 
 		std::vector<unsigned char> parsed_digits;
 		parsed_digits.reserve(kappa);
@@ -134,7 +142,7 @@ namespace floaxie
 
 		while(!go_to_beach)
 		{
-			const char c = str[pos];
+			const auto c = str[pos];
 			switch (c)
 			{
 			case '0':
@@ -215,8 +223,11 @@ namespace floaxie
 		return ret;
 	}
 
-	/** \brief Return structure for `parse_mantissa`. */
-	struct mantissa_parse_result
+	/** \brief Return structure for `parse_mantissa`.
+	 *
+	 * \tparam CharType character type (typically `char` or `wchar_t`) used
+	 */
+	template<typename CharType> struct mantissa_parse_result
 	{
 		/** \brief Calculated mantissa value. */
 		diy_fp value;
@@ -225,7 +236,7 @@ namespace floaxie
 		int K;
 
 		/** \brief Pointer to the memory after the parsed part of the buffer. */
-		const char* str_end;
+		const CharType* str_end;
 
 		/** \brief Sign of the value. */
 		bool sign;
@@ -236,15 +247,18 @@ namespace floaxie
 	 * Packs mantissa value into `diy_fp` structure and performs the necessary
 	 * rounding up according to the fractional part value.
 	 *
+	 * \tparam CharType character type (typically `char` or `wchar_t`) \p **str**
+	 * consists of
+	 *
 	 * \param str Character buffer with floating point value representation to
 	 * parse.
 	 *
 	 * \return `mantissa_parse_result` structure with the results of parsing
 	 * and corrections.
 	 */
-	inline mantissa_parse_result parse_mantissa(const char* str)
+	template<typename CharType> inline mantissa_parse_result<CharType> parse_mantissa(const CharType* str)
 	{
-		mantissa_parse_result ret;
+		mantissa_parse_result<CharType> ret;
 
 		const auto& digits_parts(parse_digits<decimal_q, true>(str));
 
@@ -278,26 +292,31 @@ namespace floaxie
 		return ret;
 	}
 
-	/** \brief Return structure for `parse_exponent`. */
-	struct exponent_parse_result
+	/** \brief Return structure for `parse_exponent`.
+	 *
+	 * \tparam CharType character type (typically `char` or `wchar_t`) used
+	 */
+	template<typename CharType> struct exponent_parse_result
 	{
 		/** \brief Value of the exponent. */
 		int value;
 
 		/** \brief Pointer to the memory after the parsed part of the buffer. */
-		const char* str_end;
+		const CharType* str_end;
 	};
 
 	/** \brief Parses exponent part of the floating point string representation.
+	 *
+	 * \tparam CharType character type (typically `char` or `wchar_t`) of \p **str**
 	 *
 	 * \param str Exponent part of character buffer with floating point value
 	 * representation to parse.
 	 *
 	 * \return `exponent_parse_result` structure with parse results.
 	 */
-	inline exponent_parse_result parse_exponent(const char* str)
+	template<typename CharType> inline exponent_parse_result<CharType> parse_exponent(const CharType* str)
 	{
-		exponent_parse_result ret;
+		exponent_parse_result<CharType> ret;
 		if (*str != 'e' && *str != 'E')
 		{
 			ret.value = 0;
@@ -323,9 +342,10 @@ namespace floaxie
 	/** \brief Return structure, containing **Krosh** algorithm results.
 	 *
 	 * \tparam FloatType destination type of floating point value to store the
-	 * results.
+	 * results
+	 * \tparam CharType character type (typically `char` or `wchar_t`) used
 	 */
-	template<typename FloatType> struct krosh_result
+	template<typename FloatType, typename CharType> struct krosh_result
 	{
 		/** \brief The result floating point value, downsampled to the defined
 		 * floating point type.
@@ -333,7 +353,7 @@ namespace floaxie
 		FloatType value;
 
 		/** \brief Pointer to the memory after the parsed part of the buffer. */
-		const char* str_end;
+		const CharType* str_end;
 
 		/** \brief Flag indicating if the result ensured to be rounded correctly. */
 		bool is_accurate;
@@ -342,17 +362,20 @@ namespace floaxie
 	/** \brief Implements **Krosh** algorithm.
 	 *
 	 * \tparam FloatType destination type of floating point value to store the
-	 * results.
+	 * results
+	 *
+	 * \tparam CharType character type (typically `char` or `wchar_t`) \p **str**
+	 * consists of
 	 *
 	 * \param str Character buffer with floating point value
-	 * representation to parse.
+	 * representation to parse
 	 *
 	 * \return `krosh_result` structure with all the results of **Krosh**
 	 * algorithm.
 	 */
-	template<typename FloatType> krosh_result<FloatType> krosh(const char* str)
+	template<typename FloatType, typename CharType> krosh_result<FloatType, CharType> krosh(const CharType* str)
 	{
-		krosh_result<FloatType> ret;
+		krosh_result<FloatType, CharType> ret;
 
 		static_assert(sizeof(FloatType) <= sizeof(diy_fp::mantissa_storage_type),
 			"Only floating point types no longer, than 64 bits are currently supported.");

@@ -67,6 +67,8 @@ namespace floaxie
 	 *
 	 * \tparam FloatType type of floating point value, calculated using passed
 	 * input parameter \p **v**
+	 * \tparam CharType character type (typically `char` or `wchar_t`) of the
+	 * output buffer \p **buffer**
 	 *
 	 * \param v floating point value to print
 	 * \param buffer character buffer of enough size (see `max_buffer_size()`)
@@ -74,7 +76,7 @@ namespace floaxie
 	 *
 	 * \see `max_buffer_size()`
 	 */
-	template<typename FloatType> inline void ftoa(FloatType v, char* buffer) noexcept
+	template<typename FloatType, typename CharType> inline void ftoa(FloatType v, CharType* buffer) noexcept
 	{
 		assert(!std::isnan(v));
 		assert(!std::isinf(v));

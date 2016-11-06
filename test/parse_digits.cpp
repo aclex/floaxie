@@ -12,7 +12,7 @@ bool check_integer()
 
 	bool ret = false;
 
-	digit_parse_result dp;
+	digit_parse_result<char> dp;
 
 	const char str1[] = "12345";
 	dp = parse_digits<decimal_q, false>(str1);
@@ -41,7 +41,7 @@ bool check_decimal_fraction()
 
 	bool ret = false;
 
-	digit_parse_result dp;
+	digit_parse_result<char> dp;
 
 	const char str0[] = "0000123400.0000000000";
 	const diy_fp::mantissa_storage_type chk0 = 1234;
