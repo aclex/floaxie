@@ -36,7 +36,10 @@ array<pair<const char*, double>, 21> test_chain = {{
 	make_pair("0.3932922657273", 0.3932922657273)
 }};
 
-array<pair<const char*, std::uint64_t>, 30> test_chain2 = {{
+array<pair<const char*, std::uint64_t>, 33> test_chain2 = {{
+	make_pair("0", 0x0),
+	make_pair("0.0", 0x0),
+	make_pair("0.", 0x0),
 	make_pair("18014398509481993", 0x4350000000000002),
 	make_pair("0.9199", 0x3fed6fd21ff2e48f),
 	make_pair("1.89", 0x3ffe3d70a3d70a3d),

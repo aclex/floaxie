@@ -138,13 +138,20 @@ namespace floaxie
 		 */
 		template<typename FloatType> inline downsample_result<FloatType> downsample()
 		{
+			downsample_result<FloatType> ret;
+
+			ret.is_accurate = true;
+
 			static_assert(std::numeric_limits<FloatType>::is_iec559, "Only IEEE-754 floating point types are supported.");
 			static_assert(sizeof(FloatType) == sizeof(mantissa_storage_type), "Float type is not compatible.");
 
-			assert(is_normalized());
+			if (m_f == 0 && m_e == 0)
+			{
+				ret.value = FloatType(0);
+				return ret;
+			}
 
-			downsample_result<FloatType> ret;
-			ret.is_accurate = true;
+			assert(is_normalized());
 
 			constexpr auto full_mantissa_bit_size(std::numeric_limits<FloatType>::digits);
 			constexpr auto mantissa_bit_size(full_mantissa_bit_size - 1); // remember hidden bit
@@ -200,6 +207,7 @@ namespace floaxie
 		/** \brief Checks if the value is normalized. */
 		bool is_normalized() const noexcept
 		{
+			assert(m_f != 0); // normalization of zero is undefined
 			return m_f & msb_value<mantissa_storage_type>();
 		}
 
@@ -214,6 +222,9 @@ namespace floaxie
 		template<std::size_t original_matissa_bit_width> void normalize() noexcept
 		{
 			static_assert(original_matissa_bit_width >= 0, "Mantissa bit width should be >= 0");
+
+			if (!m_f)
+				return;
 
 			while (!nth_bit(m_f, original_matissa_bit_width))
 			{
@@ -231,6 +242,9 @@ namespace floaxie
 		/** \brief Normalizes the value the common way. */
 		void normalize() noexcept
 		{
+			if (!m_f)
+				return;
+
 			while (!highest_bit(m_f))
 			{
 				m_f <<= 1;
