@@ -11,32 +11,8 @@
 using namespace std;
 using namespace floaxie;
 
-// TODO: assign binary values for every pair instead of calculated by compiler
-array<pair<const char*, double>, 21> test_chain = {{
-	make_pair("18014398509481993", 18014398509481993.0),
-	make_pair("0.9199", 0.9199),
-	make_pair("1.89", 1.89),
-	make_pair("3.50582559e-71", 3.50582559e-71),
-	make_pair("0.500000000000000166533453693773481063544750213623046875", 0.500000000000000166533453693773481063544750213623046875),
-	make_pair("3.14159265358979323846264", std::atan(1) * 4),
-	make_pair("7.8459735791271921e+65", 7.8459735791271921e+65),
-	make_pair("3.571e266", 3.571e266),
-	make_pair("3.08984926168550152811e-32", 3.08984926168550152811e-32),
-	make_pair("1.2345689012e37", 12345689012000000866809654767368798208.),
-	make_pair("3.518437208883201171875e13", 3.518437208883201171875e13),
-	make_pair("62.5364939768271845828", 62.5364939768271845828),
-	make_pair("8.10109172351e-10", 8.10109172351e-10),
-	make_pair("1.50000000000000011102230246251565404236316680908203125", 1.50000000000000011102230246251565404236316680908203125),
-	make_pair("9007199254740991.4999999999999999999999999999999995", 9007199254740991.4999999999999999999999999999999995),
-	make_pair("9214843084008499", 9214843084008499.),
-	make_pair("30078505129381147446200", 30078505129381147446200.),
-	make_pair("1777820000000000000001", 1777820000000000000001.),
-	make_pair("0.500000000000000166547006220929549868969843373633921146392822265625", 0.500000000000000166547006220929549868969843373633921146392822265625),
-	make_pair("0.50000000000000016656055874808561867439493653364479541778564453125", 0.50000000000000016656055874808561867439493653364479541778564453125),
-	make_pair("0.3932922657273", 0.3932922657273)
-}};
 
-array<pair<const char*, std::uint64_t>, 33> test_chain2 = {{
+array<pair<const char*, std::uint64_t>, 33> test_chain = {{
 	make_pair("0", 0x0),
 	make_pair("0.0", 0x0),
 	make_pair("0.", 0x0),
@@ -96,7 +72,7 @@ int main(int, char**)
 		return floaxie::default_fallback<double>(str, str_end);
 	};
 
-	for (const auto& p : test_chain2)
+	for (const auto& p : test_chain)
 	{
 		cout << "\nChecking \"" << p.first << "\"..." << endl;
 		auto ret= atof<double>(p.first, &str_end, fallback_lambda);
@@ -107,7 +83,7 @@ int main(int, char**)
 			cout << "Incorrect conversion!" << endl;
 			return 2;
 		}
-		cout << fallback_count << " times out of " << test_chain2.size() << " fallback conversion was called" << endl;
+		cout << fallback_count << " times out of " << test_chain.size() << " fallback conversion was called" << endl;
 	}
 	return 0;
 }
