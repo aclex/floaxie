@@ -31,7 +31,7 @@
 namespace floaxie
 {
 	/** \brief Maximum number of decimal digits mantissa of `diy_fp` can hold. */
-	template<typename FloatType> constexpr std::size_t decimal_q(bit_size<typename diy_fp<FloatType>::mantissa_storage_type>() * lg_2);
+	template<typename FloatType> constexpr std::size_t decimal_q = std::numeric_limits<typename diy_fp<FloatType>::mantissa_storage_type>::digits10;
 
 	/** \brief Maximum number of necessary binary digits of fraction part. */
 	constexpr std::size_t fraction_binary_digits(4);
