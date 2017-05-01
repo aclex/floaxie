@@ -1,0 +1,20 @@
+#!/bin/sh
+
+checkfloat() {
+	echo $(echo "scale=400;ibase=16;bs=$2;ibase=A;pow=$3;dpow=$1;isvalid(dpow,bs,pow);" | bc -l analyze.bc)
+}
+
+i=0
+while read -r decpower base power; do
+	i=$(($i+1))
+	echo "decpower: $decpower"
+#	echo "base: $base"
+#	echo "power: $power"
+	checkfloat $decpower $base $power
+#	result=$?
+#	echo "$result"
+	if [ $(($i%4)) -eq 0 ]; then
+		echo ""
+	fi
+done
+

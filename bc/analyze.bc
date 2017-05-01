@@ -29,6 +29,20 @@ define analyze(dpow, bs, pow) {
 	return (result)
 }
 
+define isvalid(dpow, bs, pow) {
+	diff = abs(check(dpow, bs, pow))
+	diff_l = abs(check(dpow, bs - 1, pow))
+	diff_h = abs(check(dpow, bs + 1, pow))
+	result = 0
+	if (diff != 0) {
+		if (diff <= diff_l && diff <= diff_h) {
+			print "valid"
+		} else {
+			print "WRONG!!!"
+		}
+	}
+}
+
 define estimate(dpow, bs, pow) {
 	diff = check(dpow, bs, pow)
 	if (diff == 0) {
