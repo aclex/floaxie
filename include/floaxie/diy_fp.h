@@ -39,20 +39,15 @@ namespace floaxie
 {
 	/** \brief Integer representation of floating point value.
 	 *
-	 * The type represents floating point value using two integer values, one
-	 * to store **mantissa** and another to hold **exponent**.
-	 *
-	 * **Mantissa** is stored using the biggest natively supported standard
-	 * integer type — currently it's 64-bit unsigned integer value. Emulated
-	 * (e.g. *big integer*) integer types are not used, as they don't follow
-	 * the ideas behind the fast integer algorithms (they are slower due to
-	 * the emulation part).
-	 *
-	 * **Exponent** is stored in `int` value.
+	 * The templated type represents floating point value using two integer values, one
+	 * to store **mantissa** and another to hold **exponent**. Concrete types are
+	 * expressed as **diy_fp** specializations, with pre-defined types for **mantissa**
+	 * and **exponent**, suitable to process floating point value of the specified
+	 * precision with maximum efficiency and without losing accuracy.
 	 *
 	 * The type is used in **Grisu** and **Krosh** algorithms.
 	 */
-	class diy_fp
+	template<typename MantissaType, typename ExponentType> class basic_diy_fp
 	{
 	public:
 		/** \brief Mantissa storage type abstraction */
@@ -77,22 +72,22 @@ namespace floaxie
 
 	public:
 		/** \brief Default constructor. */
-		diy_fp() = default;
+		basic_diy_fp() = default;
 
 		/** \brief Copy constructor. */
-		diy_fp(const diy_fp&) = default;
+		basic_diy_fp(const basic_diy_fp&) = default;
 
 		/** \brief Component initialization constructor. */
-		constexpr diy_fp(mantissa_storage_type mantissa, exponent_storage_type exponent) noexcept : m_f(mantissa), m_e(exponent) { }
+		constexpr basic_diy_fp(mantissa_storage_type mantissa, exponent_storage_type exponent) noexcept : m_f(mantissa), m_e(exponent) { }
 
-		/** \brief Initializes `diy_fp` value from the value of floating point
+		/** \brief Initializes `basic_diy_fp` value from the value of floating point
 		 * type.
 		 *
 		 * It splits floating point value into mantissa and exponent
 		 * components, calculates hidden bit of mantissa and initializes
-		 * `diy_fp` value with the results of calculations.
+		 * `basic_diy_fp` value with the results of calculations.
 		 */
-		template<typename FloatType> explicit diy_fp(FloatType d) noexcept
+		template<typename FloatType> explicit basic_diy_fp(FloatType d) noexcept
 		{
 			static_assert(std::numeric_limits<FloatType>::is_iec559, "Only IEEE-754 floating point types are supported");
 
@@ -130,7 +125,7 @@ namespace floaxie
 			bool is_accurate;
 		};
 
-		/** \brief Convert `diy_fp` value back to floating point type correctly
+		/** \brief Convert `basic_diy_fp` value back to floating point type correctly
 		 * downsampling mantissa value.
 		 *
 		 * \tparam FloatType floating point type to convert to
@@ -252,9 +247,9 @@ namespace floaxie
 			}
 		}
 
-		/** \brief Subtracts the specified `diy_fp` value from the current.
+		/** \brief Subtracts the specified `basic_diy_fp` value from the current.
 		 *
-		 * Simple mantissa subtraction of `diy_fp` values. Works fine and neat
+		 * Simple mantissa subtraction of `basic_diy_fp` values. Works fine and neat
 		 * for the case, when left value is bigger, than the right and the
 		 * values are of the same exponent.
 		 *
@@ -266,7 +261,7 @@ namespace floaxie
 		 * \return reference to current value, i.e. the result of the
 		 * subtraction.
 		 */
-		diy_fp& operator-=(const diy_fp& rhs) noexcept
+		basic_diy_fp& operator-=(const basic_diy_fp& rhs) noexcept
 		{
 			assert(m_e == rhs.m_e && m_f >= rhs.m_f);
 
@@ -275,15 +270,15 @@ namespace floaxie
 			return *this;
 		}
 
-		/** \brief Non-destructive version of `diy_fp::operator-=()`. */
-		diy_fp operator-(const diy_fp& rhs) const noexcept
+		/** \brief Non-destructive version of `basic_diy_fp::operator-=()`. */
+		basic_diy_fp operator-(const basic_diy_fp& rhs) const noexcept
 		{
-			return diy_fp(*this) -= rhs;
+			return basic_diy_fp(*this) -= rhs;
 		}
 
 		/** \brief Fast and coarse multiplication.
 		 *
-		 * Performs multiplication of `diy_fp` values ignoring some carriers
+		 * Performs multiplication of `basic_diy_fp` values ignoring some carriers
 		 * for the sake of performance. This multiplication algorithm is used
 		 * in original **Grisu** implementation and also works fine for
 		 * **Krosh**.
@@ -293,7 +288,7 @@ namespace floaxie
 		 * \return reference to current value, i.e. the result of the
 		 * multiplication.
 		 */
-		diy_fp& operator*=(const diy_fp& rhs) noexcept
+		basic_diy_fp& operator*=(const basic_diy_fp& rhs) noexcept
 		{
 			constexpr std::size_t half_width = bit_size<mantissa_storage_type>() / 2;
 			constexpr auto mask_half = mask<mantissa_storage_type>(half_width);
@@ -316,16 +311,16 @@ namespace floaxie
 			return *this;
 		}
 
-		/** \brief Non-destructive version of `diy_fp::operator*=()`. */
-		diy_fp operator*(const diy_fp& rhs) const noexcept
+		/** \brief Non-destructive version of `basic_diy_fp::operator*=()`. */
+		basic_diy_fp operator*(const basic_diy_fp& rhs) const noexcept
 		{
-			return diy_fp(*this) *= rhs;
+			return basic_diy_fp(*this) *= rhs;
 		}
 
 		/** \brief Increment (prefix) with mantissa overflow control. */
-		diy_fp& operator++() noexcept
+		basic_diy_fp& operator++() noexcept
 		{
-			if (m_f < std::numeric_limits<diy_fp::mantissa_storage_type>::max())
+			if (m_f < std::numeric_limits<basic_diy_fp::mantissa_storage_type>::max())
 			{
 				++m_f;
 			}
@@ -339,7 +334,7 @@ namespace floaxie
 		}
 
 		/** \brief Postfix increment version. */
-		diy_fp operator++(int) noexcept
+		basic_diy_fp operator++(int) noexcept
 		{
 			auto temp = *this;
 			++(*this);
@@ -347,7 +342,7 @@ namespace floaxie
 		}
 
 		/** \brief Decrement (prefix) with mantissa underflow control. */
-		diy_fp& operator--() noexcept
+		basic_diy_fp& operator--() noexcept
 		{
 			if (m_f > 1)
 			{
@@ -363,28 +358,28 @@ namespace floaxie
 		}
 
 		/** \brief Postfix decrement version. */
-		diy_fp operator--(int) noexcept
+		basic_diy_fp operator--(int) noexcept
 		{
 			auto temp = *this;
 			--(*this);
 			return temp;
 		}
 
-		/** \brief Equality of `diy_fp` values.
+		/** \brief Equality of `basic_diy_fp` values.
 		 *
 		 * Just member-wise equality check.
 		 */
-		bool operator==(const diy_fp& d) const noexcept
+		bool operator==(const basic_diy_fp& d) const noexcept
 		{
 			return m_f == d.m_f && m_e == d.m_e;
 		}
 
 
-		/** \brief Inequality of `diy_fp` values.
+		/** \brief Inequality of `basic_diy_fp` values.
 		 *
-		 * Negation of `diy_fp::operator==()` for consistency.
+		 * Negation of `basic_diy_fp::operator==()` for consistency.
 		 */
-		bool operator!=(const diy_fp& d) const noexcept
+		bool operator!=(const basic_diy_fp& d) const noexcept
 		{
 			return !operator==(d);
 		}
@@ -393,7 +388,7 @@ namespace floaxie
 		 * floating point value.
 		 *
 		 * Helper function for **Grisu2** algorithm, which first converts the
-		 * specified floating point value to `diy_fp` and then calculates lower
+		 * specified floating point value to `basic_diy_fp` and then calculates lower
 		 * (M-) and higher (M+) boundaries of it and thus of original accurate
 		 * floating point value.
 		 *
@@ -405,20 +400,20 @@ namespace floaxie
 		 * \tparam FloatType type of floating point value
 		 * \param d floating point value to calculate boundaries for
 		 *
-		 * \return `std::pair` of two `diy_fp` values, **M-** and **M+**,
+		 * \return `std::pair` of two `basic_diy_fp` values, **M-** and **M+**,
 		 * respectively.
 		 *
 		 * \see [Printing Floating-Point Numbers Quickly and Accurately with
 		 * Integers]
 		 * (http://florian.loitsch.com/publications/dtoa-pldi2010.pdf)
 		 */
-		template<typename FloatType> static std::pair<diy_fp, diy_fp> boundaries(FloatType d) noexcept
+		template<typename FloatType> static std::pair<basic_diy_fp, basic_diy_fp> boundaries(FloatType d) noexcept
 		{
 			static_assert(std::numeric_limits<FloatType>::is_iec559, "Only IEEE-754 floating point types are supported");
 
-			std::pair<diy_fp, diy_fp> result;
-			diy_fp &mi(result.first), &pl(result.second);
-			pl = diy_fp(d);
+			std::pair<basic_diy_fp, basic_diy_fp> result;
+			basic_diy_fp &mi(result.first), &pl(result.second);
+			pl = basic_diy_fp(d);
 			mi = pl;
 
 			pl.m_f <<= 1;
@@ -442,15 +437,15 @@ namespace floaxie
 			return result;
 		}
 
-		/** \brief Prints `diy_fp` value.
+		/** \brief Prints `basic_diy_fp` value.
 		 *
 		 * \param os `std::basic_ostream` to print to
-		 * \param v `diy_fp` value to print
+		 * \param v `basic_diy_fp` value to print
 		 *
 		 * \return `std::basic_ostream` with the \p **v** value printed.
 		 */
 		template<typename Ch, typename Alloc>
-		friend std::basic_ostream<Ch, Alloc>& operator<<(std::basic_ostream<Ch, Alloc>& os, const diy_fp& v)
+		friend std::basic_ostream<Ch, Alloc>& operator<<(std::basic_ostream<Ch, Alloc>& os, const basic_diy_fp& v)
 		{
 			os << "(f = " << print_binary(v.m_f) << ", e = " << v.m_e << ')';
 			return os;
@@ -459,6 +454,44 @@ namespace floaxie
 	private:
 		mantissa_storage_type m_f;
 		exponent_storage_type m_e;
+	};
+
+	/** \brief Template structure to associate `basic_diy_fp` selected
+	 * specializations with floating point types of the corresponding
+	 * precision.
+	 */
+	template<typename FloatType> struct diy_fp;
+
+	/** \brief `basic_diy_fp` specialization associated with single precision
+	 * floating point type (`float`).
+	 *
+	 * **Mantissa** is stored using the fastest natively supported standard
+	 * integer type — almost always it's 32-bit unsigned integer value.
+	 *
+	 * **Exponent** is stored in `int` value. Shorter types aren't used to
+	 * avoid any performance impacts of not using default integer types
+	 * (though it can be effective in terms of cache usage).
+	 */
+	template<> struct diy_fp<float> : public basic_diy_fp<std::uint32_t, int>
+	{
+		using basic_diy_fp<std::uint32_t, int>::basic_diy_fp;
+	};
+
+	/** \brief `basic_diy_fp` specialization associated with double precision
+	 * floating point type (`double`).
+	 *
+	 * **Mantissa** is stored using the biggest natively supported standard
+	 * integer type — currently it's 64-bit unsigned integer value. Emulated
+	 * (e.g. *big integer*) integer types are not used, as they don't follow
+	 * the ideas behind the fast integer algorithms (they are slower due to
+	 * the emulation part).
+	 *
+	 * **Exponent** is stored in `int` value.
+	 *
+	 */
+	template<> struct diy_fp<double> : public basic_diy_fp<std::uint64_t, int>
+	{
+		using basic_diy_fp<std::uint64_t, int>::basic_diy_fp;
 	};
 }
 

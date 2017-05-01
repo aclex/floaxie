@@ -31,7 +31,7 @@
 namespace floaxie
 {
 	/** \brief Maximum number of decimal digits mantissa of `diy_fp` can hold. */
-	constexpr std::size_t decimal_q(bit_size<diy_fp::mantissa_storage_type>() * lg_2);
+	template<typename FloatType> constexpr std::size_t decimal_q(bit_size<typename diy_fp<FloatType>::mantissa_storage_type>() * lg_2);
 
 	/** \brief Maximum number of necessary binary digits of fraction part. */
 	constexpr std::size_t fraction_binary_digits(4);
@@ -51,6 +51,8 @@ namespace floaxie
 	 * value with denominator equal to \f$10^{\kappa}\f$.
 	 *
 	 * \tparam kappa maximum number of decimal digits to extract
+	 * \tparam FloatType destination type of floating point value to store the
+	 * results
 	 * \tparam CharType character type (typically `char` or `wchar_t`) \p **str**
 	 * consists of
 	 *
@@ -59,8 +61,11 @@ namespace floaxie
 	 * \return Numerator value of the extracted decimal digits (i.e. as they
 	 * are actually written after the decimal point).
 	 */
-	template<std::size_t kappa, typename CharType> inline diy_fp::mantissa_storage_type extract_fraction_digits(const CharType* str)
+	template<std::size_t kappa, typename CharType>
+	inline unsigned int extract_fraction_digits(const CharType* str)
 	{
+		static_assert(kappa <= std::numeric_limits<int>::digits10, "Extracting values, exceeding 'int' capacity, is not supported.");
+
 		std::array<unsigned char, kappa> parsed_digits;
 		parsed_digits.fill(0);
 
@@ -73,25 +78,27 @@ namespace floaxie
 				break;
 		}
 
-		diy_fp::mantissa_storage_type result(0);
+		unsigned int result(0);
 		std::size_t pow(0);
 		for (auto rit = parsed_digits.rbegin(); rit != parsed_digits.rend(); ++rit)
-			result += (*rit) * seq_pow<diy_fp::mantissa_storage_type, 10, kappa>(pow++);
+			result += (*rit) * seq_pow<unsigned int, 10, kappa>(pow++);
 
 		return result;
 	}
 
 	/** \brief Return structure for `parse_digits`.
 	 *
+	 * \tparam FloatType destination type of floating point value to store the
+	 * results
 	 * \tparam CharType character type (typically `char` or `wchar_t`) used
 	 */
-	template<typename CharType> struct digit_parse_result
+	template<typename FloatType, typename CharType> struct digit_parse_result
 	{
 		/** \brief Pre-initializes members to sane values. */
 		digit_parse_result() : value(0), K(0), sign(true), frac(0) { }
 
 		/** \brief Parsed mantissa value. */
-		diy_fp::mantissa_storage_type value;
+		typename diy_fp<FloatType>::mantissa_storage_type value;
 
 		/** \brief Decimal exponent, as calculated by exponent part and decimal
 		 * point position.
@@ -117,6 +124,8 @@ namespace floaxie
 	 *
 	 * \tparam kappa maximum number of digits to expect
 	 * \tparam calc_frac if `true`, try to calculate fractional part, if any
+	 * \tparam FloatType destination type of floating point value to store the
+	 * results
 	 * \tparam CharType character type (typically `char` or `wchar_t`) \p **str**
 	 * consists of
 	 *
@@ -125,9 +134,10 @@ namespace floaxie
 	 *
 	 * \return `digit_parse_result` with the parsing results.
 	 */
-	template<std::size_t kappa, bool calc_frac, typename CharType> inline digit_parse_result<CharType> parse_digits(const CharType* str)
+	template<std::size_t kappa, bool calc_frac, typename FloatType, typename CharType>
+	inline digit_parse_result<FloatType, CharType> parse_digits(const CharType* str)
 	{
-		digit_parse_result<CharType> ret;
+		digit_parse_result<FloatType, CharType> ret;
 
 		std::vector<unsigned char> parsed_digits;
 		parsed_digits.reserve(kappa);
@@ -215,7 +225,7 @@ namespace floaxie
 
 		std::size_t pow(0);
 		for (auto rit = parsed_digits.rbegin(); rit != parsed_digits.rend(); ++rit)
-			ret.value += (*rit) * seq_pow<diy_fp::mantissa_storage_type, 10, decimal_q>(pow++);
+			ret.value += (*rit) * seq_pow<typename diy_fp<FloatType>::mantissa_storage_type, 10, decimal_q<FloatType>>(pow++);
 
 		ret.str_end = str + (pos - 1);
 		ret.K = pow_gain - fraction_digits_count;
@@ -225,12 +235,13 @@ namespace floaxie
 
 	/** \brief Return structure for `parse_mantissa`.
 	 *
+	 * \tparam FloatType destination value floating point type
 	 * \tparam CharType character type (typically `char` or `wchar_t`) used
 	 */
-	template<typename CharType> struct mantissa_parse_result
+	template<typename FloatType, typename CharType> struct mantissa_parse_result
 	{
 		/** \brief Calculated mantissa value. */
-		diy_fp value;
+		diy_fp<FloatType> value;
 
 		/** \brief Corrected value of decimal exponent value */
 		int K;
@@ -247,6 +258,8 @@ namespace floaxie
 	 * Packs mantissa value into `diy_fp` structure and performs the necessary
 	 * rounding up according to the fractional part value.
 	 *
+	 * \tparam FloatType destination type of floating point value to store the
+	 * results
 	 * \tparam CharType character type (typically `char` or `wchar_t`) \p **str**
 	 * consists of
 	 *
@@ -256,13 +269,13 @@ namespace floaxie
 	 * \return `mantissa_parse_result` structure with the results of parsing
 	 * and corrections.
 	 */
-	template<typename CharType> inline mantissa_parse_result<CharType> parse_mantissa(const CharType* str)
+	template<typename FloatType, typename CharType> inline mantissa_parse_result<FloatType, CharType> parse_mantissa(const CharType* str)
 	{
-		mantissa_parse_result<CharType> ret;
+		mantissa_parse_result<FloatType, CharType> ret;
 
-		const auto& digits_parts(parse_digits<decimal_q, true>(str));
+		const auto& digits_parts(parse_digits<decimal_q<FloatType>, true, FloatType>(str));
 
-		ret.value = diy_fp(digits_parts.value, 0);
+		ret.value = diy_fp<FloatType>(digits_parts.value, 0);
 
 		auto& w(ret.value);
 		w.normalize();
@@ -277,10 +290,10 @@ namespace floaxie
 			assert(w.exponent() >= -4);
 			const std::size_t lsb_pow(4 + w.exponent());
 
-			diy_fp::mantissa_storage_type f(w.mantissa());
+			typename diy_fp<FloatType>::mantissa_storage_type f(w.mantissa());
 			f |= digits_parts.frac >> lsb_pow;
 
-			w = diy_fp(f, w.exponent());
+			w = diy_fp<FloatType>(f, w.exponent());
 
 			// round correctly avoiding integer overflow, undefined behaviour, pain and suffering
 			if (round_up(digits_parts.frac, lsb_pow).value)
@@ -326,7 +339,7 @@ namespace floaxie
 		{
 			++str;
 
-			const auto& digit_parts(parse_digits<exponent_decimal_digits, false>(str));
+			const auto& digit_parts(parse_digits<exponent_decimal_digits, false, float>(str));
 
 			ret.value = digit_parts.value * seq_pow<int, 10, exponent_decimal_digits>(digit_parts.K);
 
@@ -377,11 +390,11 @@ namespace floaxie
 	{
 		krosh_result<FloatType, CharType> ret;
 
-		static_assert(sizeof(FloatType) <= sizeof(diy_fp::mantissa_storage_type),
+		static_assert(sizeof(FloatType) <= sizeof(typename diy_fp<FloatType>::mantissa_storage_type),
 			"Only floating point types no longer, than 64 bits are currently supported.");
 
-		auto mp(parse_mantissa(str));
-		diy_fp& w(mp.value);
+		auto mp(parse_mantissa<FloatType>(str));
+		diy_fp<FloatType>& w(mp.value);
 
 		const auto& ep(parse_exponent(mp.str_end));
 
@@ -391,7 +404,7 @@ namespace floaxie
 			w *= cached_power<FloatType>(mp.K);
 
 		w.normalize();
-		const auto& v(w.downsample<FloatType>());
+		const auto& v(w.template downsample<FloatType>());
 		ret.value = v.value;
 		ret.str_end = ep.str_end;
 		ret.is_accurate = v.is_accurate;

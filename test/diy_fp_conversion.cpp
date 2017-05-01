@@ -15,7 +15,7 @@ bool check_double_conversion()
 	const double pi(std::atan(1) * 4);
 	cout << "original pi: " << print_binary(pi) << endl;
 
-	diy_fp w(pi);
+	diy_fp<double> w(pi);
 	w.normalize<std::numeric_limits<double>::digits>();
 
 	const auto& check_pi(w.downsample<double>());

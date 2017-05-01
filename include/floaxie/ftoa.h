@@ -31,13 +31,16 @@ namespace floaxie
 	 * Maximum size of buffer passed to `ftoa()` guaranteed not to lead to
 	 * undefined behaviour.
 	 *
+	 * \tparam FloatType floating point type, which value is planned to be
+	 * printed to the buffer.
+	 *
 	 * \return maximum size of buffer, which can ever be used in the very worst
 	 * case.
 	 */
-	constexpr std::size_t max_buffer_size() noexcept
+	template<typename FloatType> constexpr std::size_t max_buffer_size() noexcept
 	{
 		// digits, '.' (or 'e' plus three-digit power with optional sign) and '\0'
-		return max_digits() + 1 + 1 + 3 + 1;
+		return max_digits<FloatType>() + 1 + 1 + 3 + 1;
 	}
 
 	/** \brief Prints floating point value to optimal string representation.
