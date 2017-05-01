@@ -36,13 +36,13 @@ namespace floaxie
 	 * power using pre-calculated and compiled version of binary mantissa
 	 * and exponent.
 	 */
-	inline diy_fp cached_power(int k) noexcept
+	template<typename FloatType> inline diy_fp cached_power(int k) noexcept
 	{
-		assert(k >= -static_cast<int>(powers_ten<double>::pow_0_offset));
+		assert(k >= -static_cast<int>(powers_ten<FloatType>::pow_0_offset));
 
-		const std::size_t index = powers_ten<double>::pow_0_offset + k;
+		const std::size_t index = powers_ten<FloatType>::pow_0_offset + k;
 
-		return diy_fp(powers_ten<double>::f[index], powers_ten<double>::e[index]);
+		return diy_fp(powers_ten<FloatType>::f[index], powers_ten<FloatType>::e[index]);
 	}
 }
 

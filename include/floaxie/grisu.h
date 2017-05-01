@@ -296,7 +296,7 @@ namespace floaxie
 		diy_fp &w_m(w.first), &w_p(w.second);
 
 		const int mk = k_comp_exp<alpha, gamma>(w_p.exponent());
-		const diy_fp& c_mk(cached_power(mk));
+		const diy_fp& c_mk(cached_power<FloatType>(mk));
 
 		w_m *= c_mk;
 		w_p *= c_mk;

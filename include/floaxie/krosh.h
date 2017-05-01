@@ -388,7 +388,7 @@ namespace floaxie
 		mp.K += ep.value;
 
 		if (mp.K)
-			w *= cached_power(mp.K);
+			w *= cached_power<FloatType>(mp.K);
 
 		w.normalize();
 		const auto& v(w.downsample<FloatType>());
