@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Alexey Chernov <4ernov@gmail.com>
+ * Copyright 2015-2017 Alexey Chernov <4ernov@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,29 +21,27 @@
  * (http://florian.loitsch.com/publications/dtoa-pldi2010.pdf)
  */
 
-#ifndef FLOAXIE_CACHED_POWER_H
-#define FLOAXIE_CACHED_POWER_H
-
-#include <cstddef>
-#include <cassert>
-
-#include <floaxie/powers_ten_double.h>
-#include <floaxie/diy_fp.h>
+#ifndef FLOAXIE_POWERS_TEN_H
+#define FLOAXIE_POWERS_TEN_H
 
 namespace floaxie
 {
-	/** \brief Returns pre-calculated `diy_fp` value of 10 in the specified
-	 * power using pre-calculated and compiled version of binary mantissa
-	 * and exponent.
+	/** \brief Structure template to store compile-time values of powers of ten.
+	 *
+	 * The template represents a structure family, which stores pre-calculated
+	 * values of significands and exponents of powers of ten, represented in
+	 * integer form of the specified precision.
+	 *
+	 * The exact values are written in specializations of the template for
+	 * single precision or double precision floating point type.
+	 *
+	 * The template specializations are used in **Grisu** and **Krosh** algorithms
+	 * to get the pre-calculated cached power of ten.
+	 *
+	 * \tparam FloatType floating point type, for which precision the values are
+	 * calculated.
 	 */
-	inline diy_fp cached_power(int k) noexcept
-	{
-		assert(k >= -static_cast<int>(powers_ten<double>::pow_0_offset));
-
-		const std::size_t index = powers_ten<double>::pow_0_offset + k;
-
-		return diy_fp(powers_ten<double>::f[index], powers_ten<double>::e[index]);
-	}
+	template<typename FloatType> struct powers_ten;
 }
 
-#endif // FLOAXIE_CACHED_POWER_H
+#endif // FLOAXIE_POWERS_TEN_H
