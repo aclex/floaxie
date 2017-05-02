@@ -404,6 +404,10 @@ namespace floaxie
 		/** \brief Offsef of the values for zero power in the arrays.
 		 */
 		static constexpr std::size_t pow_0_offset = 343;
+
+		/** \brief Boundaries of possible powers of ten for the type.
+		 */
+		static constexpr std::pair<int, int> boundaries = { -343, 343 };
 	};
 
 	constexpr decltype(powers_ten<double>::f) powers_ten<double>::f;
