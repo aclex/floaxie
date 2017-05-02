@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <cstddef>
+#include <cmath>
 #include <cassert>
 
 #include <floaxie/diy_fp.h>
@@ -134,16 +135,18 @@ namespace floaxie
 	 *
 	 * \return `digit_parse_result` with the parsing results.
 	 */
-	template<std::size_t kappa, bool calc_frac, typename FloatType, typename CharType>
-	inline digit_parse_result<FloatType, CharType> parse_digits(const CharType* str)
+	template<typename FloatType, typename CharType>
+	inline digit_parse_result<FloatType, CharType> parse_digits(const CharType* str) noexcept
 	{
 		digit_parse_result<FloatType, CharType> ret;
+
+		constexpr std::size_t kappa = decimal_q<FloatType>;
 
 		std::vector<unsigned char> parsed_digits;
 		parsed_digits.reserve(kappa);
 
 		bool dot_set(false);
-		bool frac_calculated(!calc_frac);
+		bool frac_calculated(false);
 		std::size_t pow_gain(0);
 		std::size_t zero_substring_length(0), fraction_digits_count(0);
 
@@ -273,7 +276,7 @@ namespace floaxie
 	{
 		mantissa_parse_result<FloatType, CharType> ret;
 
-		const auto& digits_parts(parse_digits<decimal_q<FloatType>, true, FloatType>(str));
+		const auto& digits_parts(parse_digits<FloatType>(str));
 
 		ret.value = diy_fp<FloatType>(digits_parts.value, 0);
 
@@ -339,7 +342,7 @@ namespace floaxie
 		{
 			++str;
 
-			const auto& digit_parts(parse_digits<exponent_decimal_digits, false, float>(str));
+			const auto& digit_parts(parse_digits<float>(str));
 
 			ret.value = digit_parts.value * seq_pow<int, 10, exponent_decimal_digits>(digit_parts.K);
 
@@ -351,6 +354,15 @@ namespace floaxie
 
 		return ret;
 	}
+
+	/** \brief Template variable to unify getting `HUGE_VAL` for
+	 * different floating point types.
+	 *
+	 * \tparam FloatType floating point type to get the value for.
+	 */
+	template<typename FloatType> FloatType huge_value;
+	template<> float huge_value<float> = HUGE_VALF;
+	template<> double huge_value<double> = HUGE_VAL;
 
 	/** \brief Return structure, containing **Krosh** algorithm results.
 	 *
@@ -401,7 +413,20 @@ namespace floaxie
 		mp.K += ep.value;
 
 		if (mp.K)
-			w *= cached_power<FloatType>(mp.K);
+		{
+			if (mp.K >= powers_ten<FloatType>::boundaries.first && mp.K <= powers_ten<FloatType>::boundaries.second)
+			{
+				w *= cached_power<FloatType>(mp.K);
+			}
+			else
+			{
+				ret.value = huge_value<FloatType>;
+				ret.str_end = ep.str_end;
+				ret.is_accurate = true;
+
+				return ret;
+			}
+		}
 
 		w.normalize();
 		const auto& v(w.template downsample<FloatType>());
