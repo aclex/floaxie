@@ -77,12 +77,19 @@ int main(int, char**)
 		cout << "\nChecking \"" << p.first << "\"..." << endl;
 		auto ret= atof<double>(p.first, &str_end, fallback_lambda);
 		cout << "\tcorrect: " << print_binary(type_punning_cast<double>(p.second)) << endl;
-		cout << "\tresult:  " << print_binary(ret) << endl;
+		cout << "\tresult:  " << print_binary(ret.value) << endl;
 		if (ret != type_punning_cast<double>(p.second))
 		{
 			cout << "Incorrect conversion!" << endl;
 			return 2;
 		}
+
+		if (ret.status != conversion_status::success)
+		{
+			cout << "Flow status!" << endl;
+			return 3;
+		}
+
 		cout << fallback_count << " times out of " << test_chain.size() << " fallback conversion was called" << endl;
 	}
 	return 0;

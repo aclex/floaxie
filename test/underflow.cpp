@@ -14,7 +14,8 @@ using namespace floaxie;
 namespace
 {
 	const char* test1 = "5e-577";
-	const char* test2 = "0.000000000000000000000000000000001";
+	const char* test2 = "0.00000000000000000000000000000000000000000000000000001";
+	const char* test3 = "0.0000000000000000000000000000000000000000000000001e49"; // should be equal to 1
 }
 
 int main(int, char**)
@@ -25,10 +26,17 @@ int main(int, char**)
 	{
 		return -1;
 	}
+
 	const auto ret2 = atof<float>(test2, &str_end);
 	if (ret2.value != 0 || ret2.status != conversion_status::underflow)
 	{
 		return -2;
+	}
+
+	const auto ret3 = atof<float>(test3, &str_end);
+	if (ret3.value != 1 || ret3.status != conversion_status::success)
+	{
+		return -3;
 	}
 
 	return 0;

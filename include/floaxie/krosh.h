@@ -176,11 +176,14 @@ namespace floaxie
 			case '7':
 			case '8':
 			case '9':
-				if (parsed_digits.size() + zero_substring_length < kappa) // we stop one digit before the maximum decimal digits to prevent overflow
+				if (parsed_digits.empty() ||
+					parsed_digits.size() + zero_substring_length < kappa) // we stop one digit before the maximum decimal digits to prevent overflow
 				{
 					if (zero_substring_length)
 					{
-						parsed_digits.insert(parsed_digits.end(), zero_substring_length, 0);
+						if (!parsed_digits.empty())
+							parsed_digits.insert(parsed_digits.end(), zero_substring_length, 0);
+
 						fraction_digits_count += zero_substring_length - pow_gain;
 						zero_substring_length = 0;
 						pow_gain = 0;
@@ -198,8 +201,8 @@ namespace floaxie
 						ret.frac = convert_numerator<fraction_decimal_digits, fraction_binary_digits>(tail);
 
 						frac_calculated = true;
-
 					}
+
 					pow_gain += !dot_set;
 				}
 				break;
