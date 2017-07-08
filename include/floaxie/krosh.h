@@ -35,13 +35,13 @@ namespace floaxie
 	template<typename FloatType> constexpr std::size_t decimal_q = std::numeric_limits<typename diy_fp<FloatType>::mantissa_storage_type>::digits10;
 
 	/** \brief Maximum number of necessary binary digits of fraction part. */
-	constexpr std::size_t fraction_binary_digits(4);
+	constexpr std::size_t fraction_binary_digits(7);
 
 	/** \brief Maximum number of decimal digits of fraction part, which can be observed. */
 	constexpr std::size_t fraction_decimal_digits(4);
 
 	/** \brief Maximum length of input string (2 KB). */
-	constexpr std::size_t offset = 2048;
+	constexpr std::size_t maximum_offset = 2048;
 
 	/** \brief Maximum number of decimal digits in the exponent value. */
 	constexpr std::size_t exponent_decimal_digits(3);
@@ -175,7 +175,7 @@ namespace floaxie
 			case '7':
 			case '8':
 			case '9':
-				if (parsed_digits.size() + zero_substring_length < kappa)
+				if (parsed_digits.size() + zero_substring_length < kappa) // we stop one digit before the maximum decimal digits to prevent overflow
 				{
 					if (zero_substring_length)
 					{
@@ -221,7 +221,7 @@ namespace floaxie
 				break;
 			}
 
-			go_to_beach |= pos > offset;
+			go_to_beach |= pos > maximum_offset;
 
 			++pos;
 		}
@@ -290,8 +290,8 @@ namespace floaxie
 		// extract additional binary digits and round up gently
 		if (digits_parts.frac)
 		{
-			assert(w.exponent() >= -4);
-			const std::size_t lsb_pow(4 + w.exponent());
+			assert(w.exponent() >= (-1) * static_cast<int>(fraction_binary_digits));
+			const std::size_t lsb_pow(fraction_binary_digits + w.exponent());
 
 			typename diy_fp<FloatType>::mantissa_storage_type f(w.mantissa());
 			f |= digits_parts.frac >> lsb_pow;
@@ -355,15 +355,6 @@ namespace floaxie
 		return ret;
 	}
 
-	/** \brief Template variable to unify getting `HUGE_VAL` for
-	 * different floating point types.
-	 *
-	 * \tparam FloatType floating point type to get the value for.
-	 */
-	template<typename FloatType> FloatType huge_value;
-	template<> float huge_value<float> = HUGE_VALF;
-	template<> double huge_value<double> = HUGE_VAL;
-
 	/** \brief Return structure, containing **Krosh** algorithm results.
 	 *
 	 * \tparam FloatType destination type of floating point value to store the
@@ -403,7 +394,7 @@ namespace floaxie
 		krosh_result<FloatType, CharType> ret;
 
 		static_assert(sizeof(FloatType) <= sizeof(typename diy_fp<FloatType>::mantissa_storage_type),
-			"Only floating point types no longer, than 64 bits are currently supported.");
+			"Only floating point types no longer, than 64 bits are supported.");
 
 		auto mp(parse_mantissa<FloatType>(str));
 		diy_fp<FloatType>& w(mp.value);

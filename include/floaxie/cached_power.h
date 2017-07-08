@@ -27,7 +27,9 @@
 #include <cstddef>
 #include <cassert>
 
+#include <floaxie/powers_ten_single.h>
 #include <floaxie/powers_ten_double.h>
+
 #include <floaxie/diy_fp.h>
 
 namespace floaxie

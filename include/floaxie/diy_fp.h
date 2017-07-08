@@ -34,6 +34,7 @@
 #include <floaxie/bit_ops.h>
 #include <floaxie/print.h>
 #include <floaxie/type_punning_cast.h>
+#include <floaxie/huge_val.h>
 
 namespace floaxie
 {
@@ -51,9 +52,9 @@ namespace floaxie
 	{
 	public:
 		/** \brief Mantissa storage type abstraction */
-		typedef std::uint64_t mantissa_storage_type;
+		typedef MantissaType mantissa_storage_type;
 		/** \brief Exponent storage type abstraction */
-		typedef int exponent_storage_type;
+		typedef ExponentType exponent_storage_type;
 
 	private:
 		/** \brief Returns value of hidden bit for the specified floating point type.
@@ -159,13 +160,15 @@ namespace floaxie
 
 			if (m_e >= std::numeric_limits<FloatType>::max_exponent)
 			{
-				ret.value = std::numeric_limits<FloatType>::infinity();
+				ret.value = huge_value<FloatType>;
+				//TODO: set proper status, overflow
 				return ret;
 			}
 
 			if (m_e + int(my_mantissa_size) < std::numeric_limits<FloatType>::min_exponent - int(mantissa_bit_size))
 			{
 				ret.value = FloatType(0);
+				//TODO: set proper status, underflow
 				return ret;
 			}
 
