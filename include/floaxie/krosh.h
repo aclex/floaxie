@@ -192,7 +192,8 @@ namespace floaxie
 				{
 					if (!frac_calculated)
 					{
-						auto tail = extract_fraction_digits<fraction_decimal_digits>(str + pos - zero_substring_length);
+						const std::size_t frac_suffix_size = parsed_digits.size() + zero_substring_length - kappa;
+						auto tail = extract_fraction_digits<fraction_decimal_digits>(str + pos - frac_suffix_size);
 						ret.frac = convert_numerator<fraction_decimal_digits, fraction_binary_digits>(tail);
 
 						frac_calculated = true;
