@@ -35,6 +35,7 @@
 #include <floaxie/print.h>
 #include <floaxie/type_punning_cast.h>
 #include <floaxie/huge_val.h>
+#include <floaxie/conversion_status.h>
 
 namespace floaxie
 {
@@ -124,6 +125,8 @@ namespace floaxie
 			/** \brief Flag indicating if the conversion is accurate (no
 			 * [rounding errors] (http://www.exploringbinary.com/decimal-to-floating-point-needs-arbitrary-precision/) */
 			bool is_accurate;
+			/** \brief Status showing possible under- or overflow found during downsampling */
+			conversion_status status;
 		};
 
 		/** \brief Convert `basic_diy_fp` value back to floating point type correctly
@@ -137,6 +140,7 @@ namespace floaxie
 			downsample_result<FloatType> ret;
 
 			ret.is_accurate = true;
+			ret.status = conversion_status::success;
 
 			static_assert(std::numeric_limits<FloatType>::is_iec559, "Only IEEE-754 floating point types are supported.");
 			static_assert(sizeof(FloatType) == sizeof(mantissa_storage_type), "Float type is not compatible.");
@@ -161,14 +165,14 @@ namespace floaxie
 			if (m_e >= std::numeric_limits<FloatType>::max_exponent)
 			{
 				ret.value = huge_value<FloatType>;
-				//TODO: set proper status, overflow
+				ret.status = conversion_status::overflow;
 				return ret;
 			}
 
 			if (m_e + int(my_mantissa_size) < std::numeric_limits<FloatType>::min_exponent - int(mantissa_bit_size))
 			{
 				ret.value = FloatType(0);
-				//TODO: set proper status, underflow
+				ret.status = conversion_status::underflow;
 				return ret;
 			}
 

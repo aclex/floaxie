@@ -19,8 +19,8 @@ namespace
 int main(int, char**)
 {
 	char* str_end;
-	double ret1 = atof<double>(test1, &str_end);
-	if (ret1 != HUGE_VAL)
+	const auto ret1 = atof<double>(test1, &str_end);
+	if (ret1.value != HUGE_VAL || ret1.status != conversion_status::overflow)
 	{
 		return -1;
 	}

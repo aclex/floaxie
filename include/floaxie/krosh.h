@@ -28,6 +28,7 @@
 #include <floaxie/cached_power.h>
 #include <floaxie/bit_ops.h>
 #include <floaxie/fraction.h>
+#include <floaxie/conversion_status.h>
 
 namespace floaxie
 {
@@ -374,6 +375,9 @@ namespace floaxie
 
 		/** \brief Flag indicating if the result ensured to be rounded correctly. */
 		bool is_accurate;
+
+		/** \brief Status of the performed conversion. */
+		conversion_status status;
 	};
 
 	/** \brief Implements **Krosh** algorithm.
@@ -415,10 +419,12 @@ namespace floaxie
 				if (mp.K < powers_ten<FloatType>::boundaries.first)
 				{
 					ret.value = FloatType(0);
+					ret.status = conversion_status::underflow;
 				}
 				else // mp.K > powers_ten<FloatType>::boundaries.second
 				{
 					ret.value = huge_value<FloatType>;
+					ret.status = conversion_status::overflow;
 				}
 
 				ret.str_end = ep.str_end;
@@ -433,6 +439,7 @@ namespace floaxie
 		ret.value = v.value;
 		ret.str_end = ep.str_end;
 		ret.is_accurate = v.is_accurate;
+		ret.status = v.status;
 
 		if (!mp.sign)
 			ret.value = -ret.value;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015, 2016 Alexey Chernov <4ernov@gmail.com>
+ * Copyright 2015, 2016, 2017 Alexey Chernov <4ernov@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@
 
 #include <floaxie/default_fallback.h>
 
+#include <floaxie/conversion_status.h>
+
 /** \brief Floaxie functions templates.
  *
  * This namespace contains two main public floaxie functions (`atof()` and
@@ -29,6 +31,25 @@
  */
 namespace floaxie
 {
+	/** \brief Small decorator around returning value to help the client
+	 * optionally receive minor error states along with it.
+	 *
+	 * \tparam FloatType target floating point type to store results.
+	 */
+	template<typename FloatType> struct value_and_status
+	{
+		/** \brief The returning result value itself. */
+		FloatType value;
+		/** \brief Conversion status indicating any problems occurred. */
+		conversion_status status;
+
+		/** \brief Constructs the object with empty value and successful status */
+		value_and_status() noexcept : value(), status(conversion_status::success) { }
+		/** \brief Default conversion operator to `FloatType` to make use of the
+		 * wrapper more transparent. */
+		operator FloatType() const noexcept { return value; }
+	};
+
 	/** \brief Parses floating point string representation.
 	 *
 	 * Interprets string representation of floating point value using Krosh
@@ -67,20 +88,32 @@ namespace floaxie
 		typename CharType,
 		typename FallbackCallable = FloatType (const CharType*, CharType**)
 	>
-	inline FloatType atof(const CharType* str, CharType** str_end, FallbackCallable fallback_func = default_fallback<FloatType, CharType>)
+	inline value_and_status<FloatType> atof(const CharType* str, CharType** str_end, FallbackCallable fallback_func = default_fallback<FloatType, CharType>)
 	{
+		value_and_status<FloatType> result;
+
 		const auto& cr(krosh<FloatType>(str));
 
-		if (cr.str_end == str)
-			return 0;
+		if (cr.str_end != str)
+		{
+			if (cr.is_accurate)
+			{
+				result.value = cr.value;
+				result.status = cr.status;
+			}
+			else
+			{
+				result.value = fallback_func(str, str_end);
+				result.status = check_errno(result.value);
 
-		if (!cr.is_accurate)
-			return fallback_func(str, str_end);
+				return result;
+			}
+		}
 
 		if (str_end)
 			*str_end = const_cast<CharType*>(cr.str_end);
 
-		return cr.value;
+		return result;
 	}
 }
 

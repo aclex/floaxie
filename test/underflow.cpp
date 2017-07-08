@@ -20,13 +20,13 @@ namespace
 int main(int, char**)
 {
 	char* str_end;
-	float ret1 = atof<float>(test1, &str_end);
-	if (ret1 != 0)
+	const auto ret1 = atof<float>(test1, &str_end);
+	if (ret1.value != 0 || ret1.status != conversion_status::underflow)
 	{
 		return -1;
 	}
-	float ret2 = atof<float>(test2, &str_end);
-	if (ret2 != 0)
+	const auto ret2 = atof<float>(test2, &str_end);
+	if (ret2.value != 0 || ret2.status != conversion_status::underflow)
 	{
 		return -2;
 	}

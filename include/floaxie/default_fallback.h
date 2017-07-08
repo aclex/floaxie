@@ -20,6 +20,8 @@
 #include <cstdlib>
 #include <cwchar>
 
+#include <floaxie/conversion_status.h>
+
 namespace floaxie
 {
 	/** \brief Function template to wrap C Standard Library floating point
@@ -65,6 +67,14 @@ namespace floaxie
 	template<> inline long double default_fallback<long double, wchar_t>(const wchar_t* str, wchar_t** str_end)
 	{
 		return std::wcstold(str, str_end);
+	}
+
+	template<typename FloatType> conversion_status check_errno(FloatType returned_value)
+	{
+		if (errno != ERANGE)
+			return conversion_status::success;
+
+		return returned_value ? conversion_status::overflow : conversion_status::underflow;
 	}
 }
 
