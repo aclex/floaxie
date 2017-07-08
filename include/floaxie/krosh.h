@@ -412,7 +412,15 @@ namespace floaxie
 			}
 			else
 			{
-				ret.value = huge_value<FloatType>;
+				if (mp.K < powers_ten<FloatType>::boundaries.first)
+				{
+					ret.value = FloatType(0);
+				}
+				else // mp.K > powers_ten<FloatType>::boundaries.second
+				{
+					ret.value = huge_value<FloatType>;
+				}
+
 				ret.str_end = ep.str_end;
 				ret.is_accurate = true;
 

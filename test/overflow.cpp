@@ -13,7 +13,7 @@ using namespace floaxie;
 
 namespace
 {
-	const char* test1 = "5e-577";
+	const char* test1 = "5e577";
 }
 
 int main(int, char**)
