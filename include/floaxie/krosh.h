@@ -47,6 +47,84 @@ namespace floaxie
 	/** \brief Maximum number of decimal digits in the exponent value. */
 	constexpr std::size_t exponent_decimal_digits(3);
 
+	/** \brief Tries to find and eat NaN representation in one of two forms.
+	 *
+	 * Searches for either "NAN" or "NAN(<character sequence>)" form of NaN
+	 * (not a number) value representation (case insensitive) to help
+	 * converting it to quiet NaN and finding the end of the read value.
+	 *
+	 * \param str character buffer to analyze
+	 *
+	 * \return number of consumed characters. Naturally, if it's equal to zero,
+	 * NaN representation wasn't found.
+	 */
+	template<typename CharType> std::size_t eat_nan(const CharType* str) noexcept
+	{
+		std::size_t eaten(0);
+
+		if ((str[0] == 'a' || str[0] == 'A') && (str[1] == 'n' || str[1] == 'N'))
+		{
+			const CharType* cp = str + 2;
+			eaten = 2;
+
+			/* Match `(n-char-sequence-digit)'.  */
+			if (*cp == '(')
+			{
+				do
+					++cp;
+				while ((*cp >= '0' && *cp <= '9')
+					   || ({ CharType lo = std::tolower(*cp, std::locale());
+							   lo >= 'a' && lo <= 'z'; })
+					   || *cp == '_');
+
+				if (*cp == ')')
+					eaten = cp - str + 1;
+			}
+		}
+
+		return eaten;
+	}
+
+	/** \brief Tries to find and eat infinity representation.
+	 *
+	 * Searches for either "inf" or "infinity" sequence (case insensitive)
+	 * to determine infinite floating point value representation.
+	 *
+	 * \param str character buffer to analyze
+	 *
+	 * \return number of consumed characters. Naturally, if it's equal to zero,
+	 * infinity representation wasn't found.
+	 */
+	template<typename CharType> std::size_t eat_inf(const CharType* str) noexcept
+	{
+		std::size_t eaten(0);
+
+		if ((str[0] == 'n' || str[0] == 'N') && (str[1] == 'f' || str[1] == 'F'))
+		{
+			const CharType* cp = str + 2;
+			eaten = 2;
+
+			if (*cp == 'i' || *cp == 'I')
+			{
+				++cp;
+
+				const std::array<CharType, 4> suffix {{ 'n', 'i', 't', 'y' }};
+				auto it = suffix.cbegin();
+
+				while (std::tolower(*cp, std::locale()) == *it && it != suffix.cend())
+				{
+					++cp;
+					++it;
+				}
+
+				if (it == suffix.cend())
+					eaten = cp - str;
+			}
+		}
+
+		return eaten;
+	}
+
 	/** \brief Extracts up to \p **kappa** decimal digits from fraction part.
 	 *
 	 * Extracts decimal digits from fraction part and returns it as numerator
@@ -88,6 +166,17 @@ namespace floaxie
 		return result;
 	}
 
+	/** \brief Type of special value. */
+	enum class special : unsigned char
+	{
+		/** \brief Normal value - no special. */
+		no = 0,
+		/** \brief NaN (not a number) value. */
+		nan,
+		/** \brief infinity value. */
+		inf
+	};
+
 	/** \brief Return structure for `parse_digits`.
 	 *
 	 * \tparam FloatType destination type of floating point value to store the
@@ -97,10 +186,13 @@ namespace floaxie
 	template<typename FloatType, typename CharType> struct digit_parse_result
 	{
 		/** \brief Pre-initializes members to sane values. */
-		digit_parse_result() : value(0), K(0), sign(true), frac(0) { }
+		digit_parse_result() : value(), special(), K(0), sign(true), frac(0) { }
 
 		/** \brief Parsed mantissa value. */
 		typename diy_fp<FloatType>::mantissa_storage_type value;
+
+		/** \brief Flag of special value possibly occured. */
+		special special;
 
 		/** \brief Decimal exponent, as calculated by exponent part and decimal
 		 * point position.
@@ -147,6 +239,7 @@ namespace floaxie
 		parsed_digits.reserve(kappa);
 
 		bool dot_set(false);
+		bool sign_set(false);
 		bool frac_calculated(false);
 		std::size_t pow_gain(0);
 		std::size_t zero_substring_length(0), fraction_digits_count(0);
@@ -212,11 +305,40 @@ namespace floaxie
 				dot_set = true;
 				break;
 
+			case 'n':
+			case 'N':
+				if (pos == sign_set)
+				{
+					const std::size_t eaten = eat_nan(str + pos + 1);
+					pos += eaten + 1;
+
+					if (eaten)
+						ret.special = special::nan;
+				}
+
+				go_to_beach = true;
+				break;
+
+			case 'i':
+			case 'I':
+				if (pos == sign_set)
+				{
+					const std::size_t eaten = eat_inf(str + pos + 1);
+					pos += eaten + 1;
+
+					if (eaten)
+						ret.special = special::inf;
+				}
+
+				go_to_beach = true;
+				break;
+
 			case '-':
 			case '+':
 				if (pos == 0)
 				{
 					ret.sign = static_cast<bool>('-' - c); // '+' => true, '-' => false
+					sign_set = true;
 					break;
 				}
 				// fall down
@@ -251,6 +373,9 @@ namespace floaxie
 		/** \brief Calculated mantissa value. */
 		diy_fp<FloatType> value;
 
+		/** \brief Flag of special value. */
+		special special;
+
 		/** \brief Corrected value of decimal exponent value */
 		int K;
 
@@ -283,31 +408,41 @@ namespace floaxie
 
 		const auto& digits_parts(parse_digits<FloatType>(str));
 
-		ret.value = diy_fp<FloatType>(digits_parts.value, 0);
-
-		auto& w(ret.value);
-		w.normalize();
-
-		ret.K = digits_parts.K;
-		ret.str_end = digits_parts.str_end;
-		ret.sign = digits_parts.sign;
-
-		// extract additional binary digits and round up gently
-		if (digits_parts.frac)
+		if (digits_parts.special == special::no)
 		{
-			assert(w.exponent() >= (-1) * static_cast<int>(fraction_binary_digits));
-			const std::size_t lsb_pow(fraction_binary_digits + w.exponent());
+			ret.value = diy_fp<FloatType>(digits_parts.value, 0);
 
-			typename diy_fp<FloatType>::mantissa_storage_type f(w.mantissa());
-			f |= digits_parts.frac >> lsb_pow;
+			auto& w(ret.value);
+			w.normalize();
 
-			w = diy_fp<FloatType>(f, w.exponent());
+			ret.special = special::no;
+			ret.K = digits_parts.K;
+			ret.str_end = digits_parts.str_end;
+			ret.sign = digits_parts.sign;
 
-			// round correctly avoiding integer overflow, undefined behaviour, pain and suffering
-			if (round_up(digits_parts.frac, lsb_pow).value)
+			// extract additional binary digits and round up gently
+			if (digits_parts.frac)
 			{
-				++w;
+				assert(w.exponent() >= (-1) * static_cast<int>(fraction_binary_digits));
+				const std::size_t lsb_pow(fraction_binary_digits + w.exponent());
+
+				typename diy_fp<FloatType>::mantissa_storage_type f(w.mantissa());
+				f |= digits_parts.frac >> lsb_pow;
+
+				w = diy_fp<FloatType>(f, w.exponent());
+
+				// round correctly avoiding integer overflow, undefined behaviour, pain and suffering
+				if (round_up(digits_parts.frac, lsb_pow).value)
+				{
+					++w;
+				}
 			}
+		}
+		else
+		{
+			ret.special = digits_parts.special;
+			ret.str_end = digits_parts.str_end;
+			ret.sign = digits_parts.sign;
 		}
 
 		return ret;
@@ -404,45 +539,71 @@ namespace floaxie
 		static_assert(sizeof(FloatType) <= sizeof(typename diy_fp<FloatType>::mantissa_storage_type),
 			"Only floating point types no longer, than 64 bits are supported.");
 
+		static_assert(std::numeric_limits<FloatType>::is_iec559, "Only IEEE-754 floating point types are supported");
+
 		auto mp(parse_mantissa<FloatType>(str));
-		diy_fp<FloatType>& w(mp.value);
 
-		const auto& ep(parse_exponent(mp.str_end));
-
-		mp.K += ep.value;
-
-		if (mp.K)
+		if (mp.special == special::no)
 		{
-			if (mp.K >= powers_ten<FloatType>::boundaries.first && mp.K <= powers_ten<FloatType>::boundaries.second)
-			{
-				w *= cached_power<FloatType>(mp.K);
-			}
-			else
-			{
-				if (mp.K < powers_ten<FloatType>::boundaries.first)
-				{
-					ret.value = FloatType(0);
-					ret.status = conversion_status::underflow;
-				}
-				else // mp.K > powers_ten<FloatType>::boundaries.second
-				{
-					ret.value = huge_value<FloatType>;
-					ret.status = conversion_status::overflow;
-				}
+			diy_fp<FloatType>& w(mp.value);
 
-				ret.str_end = ep.str_end;
-				ret.is_accurate = true;
+			const auto& ep(parse_exponent(mp.str_end));
 
-				return ret;
+			mp.K += ep.value;
+
+			if (mp.K)
+			{
+				if (mp.K >= powers_ten<FloatType>::boundaries.first && mp.K <= powers_ten<FloatType>::boundaries.second)
+				{
+					w *= cached_power<FloatType>(mp.K);
+				}
+				else
+				{
+					if (mp.K < powers_ten<FloatType>::boundaries.first)
+					{
+						ret.value = FloatType(0);
+						ret.status = conversion_status::underflow;
+					}
+					else // mp.K > powers_ten<FloatType>::boundaries.second
+					{
+						ret.value = huge_value<FloatType>;
+						ret.status = conversion_status::overflow;
+					}
+
+					ret.str_end = ep.str_end;
+					ret.is_accurate = true;
+
+					return ret;
+				}
 			}
+
+			w.normalize();
+			const auto& v(w.template downsample<FloatType>());
+			ret.value = v.value;
+			ret.str_end = ep.str_end;
+			ret.is_accurate = v.is_accurate;
+			ret.status = v.status;
 		}
+		else
+		{
+			switch (mp.special)
+			{
+			case special::nan:
+				ret.value = std::numeric_limits<FloatType>::quiet_NaN();
+				break;
 
-		w.normalize();
-		const auto& v(w.template downsample<FloatType>());
-		ret.value = v.value;
-		ret.str_end = ep.str_end;
-		ret.is_accurate = v.is_accurate;
-		ret.status = v.status;
+			case special::inf:
+				ret.value = std::numeric_limits<FloatType>::infinity();
+				break;
+
+			default:
+				break;
+			}
+
+			ret.str_end = mp.str_end;
+			ret.is_accurate = true;
+			ret.status = conversion_status::success;
+		}
 
 		if (!mp.sign)
 			ret.value = -ret.value;
