@@ -142,7 +142,7 @@ namespace floaxie
 			ret.is_accurate = true;
 			ret.status = conversion_status::success;
 
-			static_assert(std::numeric_limits<FloatType>::is_iec559, "Only IEEE-754 floating point types are supported.");
+			static_assert(std::numeric_limits<FloatType>::is_iec559, "Only IEEE-754 floating point types are supported");
 			static_assert(sizeof(FloatType) == sizeof(mantissa_storage_type), "Float type is not compatible.");
 
 			if (m_f == 0 && m_e == 0)
