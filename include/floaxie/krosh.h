@@ -166,7 +166,7 @@ namespace floaxie
 	}
 
 	/** \brief Type of special value. */
-	enum class special : unsigned char
+	enum class speciality : unsigned char
 	{
 		/** \brief Normal value - no special. */
 		no = 0,
@@ -191,7 +191,7 @@ namespace floaxie
 		typename diy_fp<FloatType>::mantissa_storage_type value;
 
 		/** \brief Flag of special value possibly occured. */
-		special special;
+		speciality special;
 
 		/** \brief Decimal exponent, as calculated by exponent part and decimal
 		 * point position.
@@ -312,7 +312,7 @@ namespace floaxie
 					pos += eaten + 1;
 
 					if (eaten)
-						ret.special = special::nan;
+						ret.special = speciality::nan;
 				}
 
 				go_to_beach = true;
@@ -326,7 +326,7 @@ namespace floaxie
 					pos += eaten + 1;
 
 					if (eaten)
-						ret.special = special::inf;
+						ret.special = speciality::inf;
 				}
 
 				go_to_beach = true;
@@ -373,7 +373,7 @@ namespace floaxie
 		diy_fp<FloatType> value;
 
 		/** \brief Flag of special value. */
-		special special;
+		speciality special;
 
 		/** \brief Corrected value of decimal exponent value */
 		int K;
@@ -407,14 +407,14 @@ namespace floaxie
 
 		const auto& digits_parts(parse_digits<FloatType>(str));
 
-		if (digits_parts.special == special::no)
+		if (digits_parts.special == speciality::no)
 		{
 			ret.value = diy_fp<FloatType>(digits_parts.value, 0);
 
 			auto& w(ret.value);
 			w.normalize();
 
-			ret.special = special::no;
+			ret.special = speciality::no;
 			ret.K = digits_parts.K;
 			ret.str_end = digits_parts.str_end;
 			ret.sign = digits_parts.sign;
@@ -542,7 +542,7 @@ namespace floaxie
 
 		auto mp(parse_mantissa<FloatType>(str));
 
-		if (mp.special == special::no)
+		if (mp.special == speciality::no)
 		{
 			diy_fp<FloatType>& w(mp.value);
 
@@ -577,7 +577,7 @@ namespace floaxie
 			}
 
 			w.normalize();
-			const auto& v(w.template downsample<FloatType>());
+			const auto& v(w.downsample());
 			ret.value = v.value;
 			ret.str_end = ep.str_end;
 			ret.is_accurate = v.is_accurate;
@@ -587,11 +587,11 @@ namespace floaxie
 		{
 			switch (mp.special)
 			{
-			case special::nan:
+			case speciality::nan:
 				ret.value = std::numeric_limits<FloatType>::quiet_NaN();
 				break;
 
-			case special::inf:
+			case speciality::inf:
 				ret.value = std::numeric_limits<FloatType>::infinity();
 				break;
 
