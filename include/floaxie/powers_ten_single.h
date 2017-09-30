@@ -269,6 +269,8 @@ namespace floaxie
 
 	constexpr decltype(powers_ten<float>::f) powers_ten<float>::f;
 	constexpr decltype(powers_ten<float>::e) powers_ten<float>::e;
+	constexpr std::size_t powers_ten<float>::pow_0_offset;
+	constexpr std::pair<int, int> powers_ten<float>::boundaries;
 }
 
 #endif // FLOAXIE_POWERS_TEN_SINGLE_H
