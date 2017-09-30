@@ -72,10 +72,9 @@ namespace floaxie
 			{
 				do
 					++cp;
-				while ((*cp >= '0' && *cp <= '9')
-					   || ({ CharType lo = std::tolower(*cp, std::locale());
-							   lo >= 'a' && lo <= 'z'; })
-					   || *cp == '_');
+				while ((*cp >= '0' && *cp <= '9') ||
+					   (std::tolower(*cp, std::locale()) >= 'a' && std::tolower(*cp, std::locale()) <= 'z') ||
+						*cp == '_');
 
 				if (*cp == ')')
 					eaten = cp - str + 1;
