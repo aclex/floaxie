@@ -16,9 +16,9 @@ bool check_double_conversion()
 	cout << "original pi: " << print_binary(pi) << endl;
 
 	diy_fp<double> w(pi);
-	w.normalize<std::numeric_limits<double>::digits>();
+	w.normalize();
 
-	const auto& check_pi(w.downsample<double>());
+	const auto& check_pi(w.downsample());
 	cout << "check_pi: " << print_binary(check_pi.value) << endl;
 
 	return check_pi.value == pi;
