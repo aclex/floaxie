@@ -261,9 +261,6 @@ namespace floaxie
 		static_assert(alpha <= gamma - 3,
 			"It's imposed that γ ⩾ α + 3, since otherwise it's not always possible to find a proper decimal cached power");
 
-		static_assert(sizeof(FloatType) <= sizeof(typename diy_fp<FloatType>::mantissa_storage_type),
-			"Only floating point types no longer, than 64 bits are currently supported.");
-
 		std::pair<diy_fp<FloatType>, diy_fp<FloatType>>&& w(diy_fp<FloatType>::boundaries(v));
 		diy_fp<FloatType> &w_m(w.first), &w_p(w.second);
 
@@ -280,6 +277,23 @@ namespace floaxie
 
 		digit_gen<alpha, gamma>(w_p, w_m, buffer, length, K);
 	}
+
+	/** \brief Structure to hold Grisu algorithm parameters, **α** and **γ**. */
+	struct parameters
+	{
+		int alpha, gamma;
+	};
+
+	/** \brief Template variable of Grisu algorithm parameters.
+	 *
+	 * Used to provide proper values of Grisu algorithm for the specified
+	 * floating point type.
+	 */
+	template<typename FloatType> constexpr parameters grisu_parameters
+	{
+		-(int(bit_size<FloatType>() / 2 + 3)), // α
+		-int(bit_size<FloatType>() / 2) // γ
+	};
 }
 
 #endif // FLOAXIE_GRISU_H

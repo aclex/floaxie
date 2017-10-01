@@ -97,7 +97,7 @@ namespace floaxie
 			*buffer = '-';
 			buffer += v < 0;
 
-			constexpr int alpha(-35), gamma(-32);
+			constexpr int alpha(grisu_parameters<FloatType>.alpha), gamma(grisu_parameters<FloatType>.gamma);
 			constexpr unsigned int decimal_scientific_threshold(16);
 
 			int len, K;
