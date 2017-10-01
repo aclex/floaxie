@@ -17,6 +17,7 @@
 #ifndef FLOAXIE_HUGE_VAL_H
 #define FLOAXIE_HUGE_VAL_H
 
+#include <limits>
 #include <cmath>
 
 namespace floaxie
@@ -29,7 +30,7 @@ namespace floaxie
 	 * \see [HUGE_VALF, HUGE_VAL, HUGE_VALL]
 	 * (http://en.cppreference.com/w/cpp/numeric/math/HUGE_VAL)
 	 */
-	template<typename FloatType> constexpr FloatType huge_value;
+	template<typename FloatType> constexpr FloatType huge_value = std::numeric_limits<FloatType>::infinity();
 
 	/** \brief `float`. */
 	template<> constexpr float huge_value<float> = HUGE_VALF;

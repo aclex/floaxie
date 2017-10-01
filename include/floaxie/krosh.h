@@ -18,6 +18,7 @@
 #define FLOAXIE_CROSH_H
 
 #include <vector>
+#include <locale>
 #include <cstddef>
 #include <cmath>
 #include <cassert>
@@ -596,6 +597,7 @@ namespace floaxie
 				break;
 
 			default:
+				ret.value = 0;
 				break;
 			}
 
