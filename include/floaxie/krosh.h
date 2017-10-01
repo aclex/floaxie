@@ -186,13 +186,10 @@ namespace floaxie
 	template<typename FloatType, typename CharType> struct digit_parse_result
 	{
 		/** \brief Pre-initializes members to sane values. */
-		digit_parse_result() : value(), special(), K(0), sign(true), frac(0) { }
+		digit_parse_result() : value(), K(0), str_end(nullptr), frac(0), special(), sign(true) { }
 
 		/** \brief Parsed mantissa value. */
 		typename diy_fp<FloatType>::mantissa_storage_type value;
-
-		/** \brief Flag of special value possibly occured. */
-		speciality special;
 
 		/** \brief Decimal exponent, as calculated by exponent part and decimal
 		 * point position.
@@ -202,11 +199,14 @@ namespace floaxie
 		/** \brief Pointer to the memory after the parsed part of the buffer. */
 		const CharType* str_end;
 
-		/** \brief Sign of the value. */
-		bool sign;
-
 		/** \brief Binary numerator of fractional part, to help correct rounding. */
 		unsigned char frac;
+
+		/** \brief Flag of special value possibly occured. */
+		speciality special;
+
+		/** \brief Sign of the value. */
+		bool sign;
 	};
 
 	/** \brief Unified method to extract and parse digits in one pass.
@@ -373,14 +373,14 @@ namespace floaxie
 		/** \brief Calculated mantissa value. */
 		diy_fp<FloatType> value;
 
-		/** \brief Flag of special value. */
-		speciality special;
-
 		/** \brief Corrected value of decimal exponent value */
 		int K;
 
 		/** \brief Pointer to the memory after the parsed part of the buffer. */
 		const CharType* str_end;
+
+		/** \brief Flag of special value. */
+		speciality special;
 
 		/** \brief Sign of the value. */
 		bool sign;
@@ -511,11 +511,11 @@ namespace floaxie
 		/** \brief Pointer to the memory after the parsed part of the buffer. */
 		const CharType* str_end;
 
-		/** \brief Flag indicating if the result ensured to be rounded correctly. */
-		bool is_accurate;
-
 		/** \brief Status of the performed conversion. */
 		conversion_status status;
+
+		/** \brief Flag indicating if the result ensured to be rounded correctly. */
+		bool is_accurate;
 	};
 
 	/** \brief Implements **Krosh** algorithm.
@@ -536,10 +536,7 @@ namespace floaxie
 	{
 		krosh_result<FloatType, CharType> ret;
 
-		static_assert(sizeof(FloatType) <= sizeof(typename diy_fp<FloatType>::mantissa_storage_type),
-			"Only floating point types no longer, than 64 bits are supported.");
-
-		static_assert(std::numeric_limits<FloatType>::is_iec559, "Only IEEE-754 floating point types are supported");
+		static_assert(sizeof(FloatType) <= sizeof(typename diy_fp<FloatType>::mantissa_storage_type), "Only floating point types no longer, than 64 bits are supported.");
 
 		auto mp(parse_mantissa<FloatType>(str));
 

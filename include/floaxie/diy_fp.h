@@ -163,11 +163,11 @@ namespace floaxie
 		{
 			/** \brief Downsampled floating point result. */
 			FloatType value;
+			/** \brief Status showing possible under- or overflow found during downsampling */
+			conversion_status status;
 			/** \brief Flag indicating if the conversion is accurate (no
 			 * [rounding errors] (http://www.exploringbinary.com/decimal-to-floating-point-needs-arbitrary-precision/) */
 			bool is_accurate;
-			/** \brief Status showing possible under- or overflow found during downsampling */
-			conversion_status status;
 		};
 
 		/** \brief Convert `diy_fp` value back to floating point type correctly
