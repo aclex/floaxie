@@ -6,7 +6,7 @@ Compiler compatibility
 ----------------------
 - [x] GCC 6
 - [x] Clang 3.7
-- [ ] Visual Studio 2015 update 3 not yet, due to the [constexpr variable bug](https://connect.microsoft.com/VisualStudio/feedback/details/2849367/initialized-constexpr-variable-declaration-is-not-allowed-in-constexpr-function-body)
+- [x] Visual Studio 2017
 
 Printing
 --------
