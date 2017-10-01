@@ -17,6 +17,7 @@
 #ifndef FLOAXIE_FTOA_H
 #define FLOAXIE_FTOA_H
 
+#include <string>
 #include <cmath>
 #include <cstddef>
 #include <cassert>
@@ -104,6 +105,64 @@ namespace floaxie
 			grisu2<alpha, gamma>(v, buffer, &len, &K);
 			prettify<decimal_scientific_threshold>(buffer, len, K);
 		}
+	}
+
+	/** \brief Prints floating point value to optimal representation in
+	 * `std::basic_string`.
+	 *
+	 * Wrapper function around `ftoa()`, which returns `std::basic_string`,
+	 * rather than writing to the specified character buffer. This may be
+	 * more useful, if working with `std::basic_string` strings is preferred.
+	 * Please note, however, than common usage scenarios might be significantly
+	 * slower, when many `std::basic_string`'s are created with this function
+	 * and concatenated to each other, than when the outputs of `ftoa()` calls
+	 * are written to one long buffer.
+	 *
+	 * \tparam FloatType type of floating point value, calculated using passed
+	 * input parameter \p **v**
+	 * \tparam CharType character type (typically `char` or `wchar_t`) of the
+	 * output buffer \p **buffer**
+	 *
+	 * \param v floating point value to print
+	 * \param buffer character buffer of enough size (see `max_buffer_size()`)
+	 * to print the representation to
+	 *
+	 * \see `ftoa()`
+	 */
+	template<typename FloatType, typename CharType> inline std::basic_string<CharType> to_basic_string(FloatType v)
+	{
+		std::basic_string<CharType> result(max_buffer_size<FloatType>(), CharType());
+
+		ftoa(v, &result.front());
+
+		result.resize(std::char_traits<CharType>::length(result.data()));
+		result.shrink_to_fit();
+
+		return result;
+	}
+
+	/** \brief 'Specialization' of `to_basic_string()` template for `std::string`. */
+	template<typename FloatType> inline std::string to_string(FloatType v)
+	{
+		return to_basic_string<FloatType, char>(v);
+	}
+
+	/** \brief 'Specialization' of `to_basic_string()` template for `std::wstring`. */
+	template<typename FloatType> inline std::wstring to_wstring(FloatType v)
+	{
+		return to_basic_string<FloatType, wchar_t>(v);
+	}
+
+	/** \brief 'Specialization' of `to_basic_string()` template for `std::u16string`. */
+	template<typename FloatType> inline std::u16string to_u16string(FloatType v)
+	{
+		return to_basic_string<FloatType, char16_t>(v);
+	}
+
+	/** \brief 'Specialization' of `to_basic_string()` template for `std::u32string`. */
+	template<typename FloatType> inline std::u32string to_u32string(FloatType v)
+	{
+		return to_basic_string<FloatType, char32_t>(v);
 	}
 }
 

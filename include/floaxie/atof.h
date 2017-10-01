@@ -17,6 +17,8 @@
 #ifndef FLOAXIE_ATOF_H
 #define FLOAXIE_ATOF_H
 
+#include <string>
+
 #include <floaxie/krosh.h>
 
 #include <floaxie/default_fallback.h>
@@ -114,6 +116,37 @@ namespace floaxie
 			*str_end = const_cast<CharType*>(cr.str_end);
 
 		return result;
+	}
+
+	/** \brief Parses floating point represented in `std::basic_string`.
+	 *
+	 * `atof()` adapter, which may be more useful for cases, where
+	 * `std::basic_string` strings are widely used. Please note, that it
+	 * might be slightly slower, than pure `atof()` due to additional
+	 * operations performed.
+	 *
+	 * \tparam FloatType target floating point type to store results.
+	 * \tparam CharType character type (typically `char` or `wchar_t`) the input
+	 * string \p **str** consists of.
+	 * \tparam FallbackCallable fallback conversion function type, in case of
+	 * Krosh is unsure if the result is correctly rounded (default is `strtof()`
+	 * for `float`'s, `strtod()` for `double`'s, `strtold()` for `long double`'s).
+	 *
+	 * \param str string representation of the value.
+	 * \param fallback_func pointer to fallback function.
+	 *
+	 * \return parsed value, if the input is correct, default constructed value
+	 * otherwise.
+	 */
+	template
+	<
+		typename FloatType,
+		typename CharType,
+		typename FallbackCallable = FloatType (const CharType*, CharType**)
+	>
+	inline value_and_status<FloatType> from_string(const std::basic_string<CharType>& str, FallbackCallable fallback_func = default_fallback<FloatType, CharType>)
+	{
+		return atof<FloatType, CharType>(str.c_str(), nullptr, fallback_func);
 	}
 }
 
