@@ -111,7 +111,7 @@ namespace floaxie
 				const std::array<CharType, 4> suffix {{ 'n', 'i', 't', 'y' }};
 				auto it = suffix.cbegin();
 
-				while (std::tolower(*cp, std::locale()) == *it && it != suffix.cend())
+				while (it != suffix.cend() && std::tolower(*cp, std::locale()) == *it)
 				{
 					++cp;
 					++it;
