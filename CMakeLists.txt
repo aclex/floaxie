@@ -17,7 +17,7 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 	add_definitions(-pedantic)
 	add_definitions(-Werror)
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-	add_definitions("/Wall")
+	add_definitions("/W4 /wd4244 /wd4805 /wd4389 /WX")
 endif ()
 
 include_directories(include)
