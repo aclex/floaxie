@@ -67,11 +67,11 @@ namespace floaxie
 	 * representation as incorrect, if there's any.
 	 *
 	 * \tparam FloatType target floating point type to store results.
+	 * \tparam CharType character type (typically `char` or `wchar_t`) the input
+	 * string \p **str** consists of.
 	 * \tparam FallbackCallable fallback conversion function type, in case of
 	 * Krosh is unsure if the result is correctly rounded (default is `strtof()`
 	 * for `float`'s, `strtod()` for `double`'s, `strtold()` for `long double`'s).
-	 * \tparam CharType character type (typically `char` or `wchar_t`) the input
-	 * string \p **str** consists of.
 	 *
 	 * \param str buffer containing the string representation of the value.
 	 * \param str_end out parameter, which will contain a pointer to first

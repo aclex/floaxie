@@ -57,7 +57,9 @@ namespace floaxie
 	 */
 	template<> struct diy_fp_traits<float>
 	{
+		/** \brief Integer type to store mantissa value */
 		typedef std::uint32_t mantissa_type;
+		/** \brief Integer type to store exponent value */
 		typedef int exponent_type;
 	};
 
@@ -75,7 +77,9 @@ namespace floaxie
 	 */
 	template<> struct diy_fp_traits<double>
 	{
+		/** \brief Integer type to store mantissa value */
 		typedef std::uint64_t mantissa_type;
+		/** \brief Integer type to store exponent value */
 		typedef int exponent_type;
 	};
 
