@@ -550,18 +550,21 @@ namespace floaxie
 
 			if (mp.K)
 			{
-				if (mp.K >= powers_ten<FloatType>::boundaries.first && mp.K <= powers_ten<FloatType>::boundaries.second)
+				const bool b1 = mp.K >= powers_ten<FloatType>::boundaries.first;
+				const bool b2 = mp.K <= powers_ten<FloatType>::boundaries.second;
+
+				if (b1 && b2)
 				{
 					w *= cached_power<FloatType>(mp.K);
 				}
 				else
 				{
-					if (mp.K < powers_ten<FloatType>::boundaries.first)
+					if (!b1)
 					{
 						ret.value = FloatType(0);
 						ret.status = conversion_status::underflow;
 					}
-					else // mp.K > powers_ten<FloatType>::boundaries.second
+					else // !b2
 					{
 						ret.value = huge_value<FloatType>;
 						ret.status = conversion_status::overflow;
