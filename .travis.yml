@@ -5,10 +5,6 @@ language: cpp
 
 os: linux
 
-compiler:
-  - gcc
-  - clang
-
 matrix:
   include:
     - os: linux
