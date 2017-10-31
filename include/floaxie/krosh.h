@@ -341,7 +341,7 @@ namespace floaxie
 					sign_set = true;
 					break;
 				}
-				// fall down
+				// fall through
 
 			default:
 				go_to_beach = true;
