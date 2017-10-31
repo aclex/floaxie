@@ -7,46 +7,46 @@ os: linux
 
 matrix:
   include:
-    - os: linux
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-5
-      env:
-         - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
+    # - os: linux
+    #   addons:
+    #     apt:
+    #       sources:
+    #         - ubuntu-toolchain-r-test
+    #       packages:
+    #         - g++-5
+    #   env:
+    #      - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
 
-    - os: linux
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-6
-      env:
-        - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
+    # - os: linux
+    #   addons:
+    #     apt:
+    #       sources:
+    #         - ubuntu-toolchain-r-test
+    #       packages:
+    #         - g++-6
+    #   env:
+    #     - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
 
-    - os: linux
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-7
-      env:
-        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+    # - os: linux
+    #   addons:
+    #     apt:
+    #       sources:
+    #         - ubuntu-toolchain-r-test
+    #       packages:
+    #         - g++-7
+    #   env:
+    #     - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 
-    - os: linux
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-            - llvm-toolchain-precise-3.7
-          packages:
-            - clang-3.7
-      env:
-        - MATRIX_EVAL="CC=clang-3.7 && CXX=clang++-3.7"
+    # - os: linux
+    #   addons:
+    #     apt:
+    #       sources:
+    #         - ubuntu-toolchain-r-test
+    #         - llvm-toolchain-precise-3.7
+    #       packages:
+    #         - clang-3.7
+    #   env:
+    #     - MATRIX_EVAL="CC=clang-3.7 && CXX=clang++-3.7"
 
 
     - os: linux
@@ -65,6 +65,6 @@ before_install:
 script:
   - mkdir build
   - cd build
-  - cmake -DCMAKE_BUILD_TYPE=$BUILD_CONFIGURATION -DTARGET_CPU=$TARGET_CPU -DBUILD_TESTS=1 ..
+  - cmake -DCMAKE_BUILD_TYPE=$BUILD_CONFIGURATION -DCMAKE_VERBOSE_MAKEFILE=1 -DBUILD_TESTS=1 ..
   - cmake --build .
   - ctest --output-on-failure
