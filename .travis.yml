@@ -3,6 +3,11 @@ sudo: false
 
 language: cpp
 
+branches:
+  only:
+    - master
+    - /^\d+\.\d+(\.\d+)?(-\S*)?$/
+
 os: linux
 
 matrix:
