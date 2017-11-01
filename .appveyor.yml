@@ -10,6 +10,9 @@ configuration:
   - Debug
   - Release
 
+install:
+  - git submodule update --init --recursive
+
 before_build:
   - cmake -G "Visual Studio 15 2017 Win64" -DBUILD_TESTS=1 .
 
