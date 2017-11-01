@@ -13,11 +13,14 @@ configuration:
 before_build:
   - cmake -G "Visual Studio 15 2017 Win64" .
 
-build_script:
-  - mkdir build
-  - cd build
-  - cmake ..
-  - cmake --build .
+build:
+  project: %APPVEYOR_BUILD_FOLDER%\%APPVEYOR_PROJECT_NAME%.sln
+
+# build_script:
+#   - mkdir build
+#   - cd build
+#   - cmake ..
+#   - cmake --build .
 
 test_script:
   - ctest --output-on-failure
