@@ -3,6 +3,11 @@ image: Visual Studio 2017
 matrix:
   fast_finish: false
 
+branches:
+  only:
+    - master
+    - /^\d+\.\d+(\.\d+)?(-\S*)?$/
+
 platform:
   - x64
 
