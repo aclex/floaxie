@@ -5,11 +5,11 @@ language: cpp
 
 os: linux
 
-compiler:
-  - clang
-
 matrix:
   include:
+    - os: linux
+      compiler: clang
+
     - os: linux
       addons:
         apt:
