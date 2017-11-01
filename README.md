@@ -9,8 +9,8 @@ One is obviously not worried too much about the speed of the values being printe
 
 Compiler compatibility
 ----------------------
-- [x] GCC 6
-- [x] Clang 3.7
+- [x] GCC 5
+- [x] Clang 3.6
 - [x] Visual Studio 2017
 
 Printing
