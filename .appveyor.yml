@@ -17,7 +17,7 @@ build_script:
   - mkdir build
   - cd build
   - cmake ..
-  - cmake --build . --config %CONFIGURATION%
+  - cmake --build .
 
 test_script:
-  - ctest -C %CONFIGURATION% --output-on-failure
+  - ctest --output-on-failure
