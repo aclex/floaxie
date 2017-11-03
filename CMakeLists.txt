@@ -25,10 +25,11 @@ include_directories(include)
 
 add_subdirectory(example)
 
+if (CALC_COVERAGE AND (CMAKE_BUILD_TYPE STREQUAL "Debug") AND CMAKE_COMPILER_IS_GNUCXX)
+	set(COVERAGE_ENABLED TRUE)
+endif()
+
 if (BUILD_TESTS)
-
-	set(COVERAGE_ENABLED (CALC_COVERAGE AND (CMAKE_BUILD_TYPE STREQUAL "Debug" AND CMAKE_COMPILER_IS_GNUCXX)))
-
 	if (COVERAGE_ENABLED)
 		message("Will calculate code coverage.")
 		add_definitions(-g -O0 --coverage)

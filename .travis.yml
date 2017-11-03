@@ -31,7 +31,8 @@ matrix:
           packages:
             - g++-7
       env:
-        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7 && BUILD_CONFIGURATION=Debug && CALC_COVERAGE=1"
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7 && BUILD_CONFIGURATION=Debug"
+        - CALC_COVERAGE=1
 
     - os: linux
       addons:
