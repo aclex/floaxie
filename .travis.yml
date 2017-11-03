@@ -12,6 +12,7 @@ os: linux
 
 matrix:
   include:
+    # 'Debug' build type
     - os: linux
       addons:
         apt:
@@ -20,7 +21,7 @@ matrix:
           packages:
             - g++-5
       env:
-         - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
+         - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5 && BUILD_CONFIGURATION=Debug"
 
     - os: linux
       addons:
@@ -30,7 +31,7 @@ matrix:
           packages:
             - g++-7
       env:
-        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7 && BUILD_CONFIGURATION=Debug && CALC_COVERAGE=1"
 
     - os: linux
       addons:
@@ -41,18 +42,7 @@ matrix:
           packages:
             - clang-3.6
       env:
-        - MATRIX_EVAL="CC=clang-3.6 && CXX=clang++-3.6"
-
-    - os: linux
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-            - llvm-toolchain-precise-3.7
-          packages:
-            - clang-3.7
-      env:
-        - MATRIX_EVAL="CC=clang-3.7 && CXX=clang++-3.7"
+        - MATRIX_EVAL="CC=clang-3.6 && CXX=clang++-3.6 && BUILD_CONFIGURATION=Debug"
 
     - os: linux
       addons:
@@ -64,14 +54,63 @@ matrix:
             - g++-7
             - clang-5.0
       env:
-        - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
+        - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0 && BUILD_CONFIGURATION=Debug"
+
+    # 'Release' build type
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-5
+      env:
+         - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5 && BUILD_CONFIGURATION=Release"
+
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-7
+      env:
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7 && BUILD_CONFIGURATION=Release"
+
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-precise-3.6
+          packages:
+            - clang-3.6
+      env:
+        - MATRIX_EVAL="CC=clang-3.6 && CXX=clang++-3.6 && BUILD_CONFIGURATION=Release"
+
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-trusty-5.0
+          packages:
+            - g++-7
+            - clang-5.0
+      env:
+        - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0 && BUILD_CONFIGURATION=Release"
 
 before_install:
     - eval "${MATRIX_EVAL}"
+    - if [ ! -d CALC_COVERAGE ]; then CALC_COVERAGE=0; fi
 
 script:
   - mkdir build
   - cd build
-  - cmake -DCMAKE_BUILD_TYPE=$BUILD_CONFIGURATION -DCMAKE_VERBOSE_MAKEFILE=1 -DBUILD_TESTS=1 ..
+  - cmake -DCMAKE_BUILD_TYPE=$BUILD_CONFIGURATION -DCMAKE_VERBOSE_MAKEFILE=1 -DBUILD_TESTS=1 -DCALC_COVERAGE=$CALC_COVERAGE ..
   - cmake --build .
   - ctest --output-on-failure
+
+after_success:
+  # Uploading report to codecov.io, if calculating coverage
+  - if [ $CALC_COVERAGE == 1 ]; then bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"; fi

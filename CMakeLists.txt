@@ -26,8 +26,18 @@ include_directories(include)
 add_subdirectory(example)
 
 if (BUILD_TESTS)
+
+	set(COVERAGE_ENABLED (CALC_COVERAGE AND (CMAKE_BUILD_TYPE STREQUAL "Debug" AND CMAKE_COMPILER_IS_GNUCXX)))
+
+	if (COVERAGE_ENABLED)
+		message("Will calculate code coverage.")
+		add_definitions(-g -O0 --coverage)
+		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage -lgcov")
+	endif()
+
 	enable_testing()
 	add_subdirectory(test)
+
 endif (BUILD_TESTS)
 
 if (BUILD_DOCUMENTATION)
