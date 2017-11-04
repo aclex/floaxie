@@ -18,6 +18,7 @@
 #define FLOAXIE_FTOA_H
 
 #include <string>
+#include <type_traits>
 #include <cmath>
 #include <cstddef>
 #include <cassert>
@@ -38,8 +39,10 @@ namespace floaxie
 	 * \return maximum size of buffer, which can ever be used in the very worst
 	 * case.
 	 */
-	template<typename FloatType> constexpr std::size_t max_buffer_size() noexcept
+	template<typename ValueType> constexpr std::size_t max_buffer_size() noexcept
 	{
+		typedef typename std::decay<ValueType>::type FloatType;
+
 		// digits, '.' (or 'e' plus three-digit power with optional sign) and '\0'
 		return max_digits<FloatType>() + 1 + 1 + 3 + 1;
 	}
