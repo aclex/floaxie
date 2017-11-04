@@ -115,5 +115,5 @@ script:
 
 after_success:
   # Uploading report to codecov.io, if calculating coverage
-  - echo "calc_coverage: $CALC_COVERAGE"
+  - echo $CALC_COVERAGE
   - if [ $CALC_COVERAGE == 1 ]; then bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"; fi
