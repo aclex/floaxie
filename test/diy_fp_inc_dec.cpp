@@ -8,7 +8,7 @@ using namespace floaxie;
 
 namespace
 {
-	constexpr double test_val(0);
+
 }
 
 int main(int, char**)
