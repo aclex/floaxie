@@ -21,7 +21,8 @@ matrix:
           packages:
             - g++-5
       env:
-         - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5 && BUILD_CONFIGURATION=Debug"
+        - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
+        - BUILD_CONFIGURATION=Debug
 
     - os: linux
       addons:
@@ -31,7 +32,8 @@ matrix:
           packages:
             - g++-7
       env:
-        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7 && BUILD_CONFIGURATION=Debug"
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+        - BUILD_CONFIGURATION=Debug
         - CALC_COVERAGE=1
 
     - os: linux
@@ -43,7 +45,8 @@ matrix:
           packages:
             - clang-3.6
       env:
-        - MATRIX_EVAL="CC=clang-3.6 && CXX=clang++-3.6 && BUILD_CONFIGURATION=Debug"
+        - MATRIX_EVAL="CC=clang-3.6 && CXX=clang++-3.6"
+        - BUILD_CONFIGURATION=Debug
 
     - os: linux
       addons:
@@ -55,7 +58,8 @@ matrix:
             - g++-7
             - clang-5.0
       env:
-        - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0 && BUILD_CONFIGURATION=Debug"
+        - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
+        - BUILD_CONFIGURATION=Debug
 
     # 'Release' build type
     - os: linux
@@ -66,7 +70,8 @@ matrix:
           packages:
             - g++-5
       env:
-         - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5 && BUILD_CONFIGURATION=Release"
+        - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
+        - BUILD_CONFIGURATION=Release
 
     - os: linux
       addons:
@@ -76,7 +81,8 @@ matrix:
           packages:
             - g++-7
       env:
-        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7 && BUILD_CONFIGURATION=Release"
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+        - BUILD_CONFIGURATION=Release
 
     - os: linux
       addons:
@@ -87,7 +93,8 @@ matrix:
           packages:
             - clang-3.6
       env:
-        - MATRIX_EVAL="CC=clang-3.6 && CXX=clang++-3.6 && BUILD_CONFIGURATION=Release"
+        - MATRIX_EVAL="CC=clang-3.6 && CXX=clang++-3.6"
+        - BUILD_CONFIGURATION=Release
 
     - os: linux
       addons:
@@ -99,7 +106,8 @@ matrix:
             - g++-7
             - clang-5.0
       env:
-        - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0 && BUILD_CONFIGURATION=Release"
+        - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
+        - BUILD_CONFIGURATION=Release
 
 before_install:
     - eval "${MATRIX_EVAL}"
