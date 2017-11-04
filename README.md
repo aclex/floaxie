@@ -1,6 +1,6 @@
 floaxie
 =======
-[![Build Status in GCC/Clang](https://travis-ci.org/aclex/floaxie.svg?branch=master)](https://travis-ci.org/aclex/floaxie) [![Build status in Visual Studio](https://ci.appveyor.com/api/projects/status/nhidn1n2o66etirk?svg=true)](https://ci.appveyor.com/project/aclex/floaxie)
+[![Build Status in GCC/Clang](https://travis-ci.org/aclex/floaxie.svg?branch=master)](https://travis-ci.org/aclex/floaxie) [![Build status in Visual Studio](https://ci.appveyor.com/api/projects/status/nhidn1n2o66etirk?svg=true)](https://ci.appveyor.com/project/aclex/floaxie) [![Code coverage](https://codecov.io/gh/aclex/floaxie/branch/master/graph/badge.svg)](https://codecov.io/gh/aclex/floaxie)
 
 Floaxie is C++14 header-only library for printing floating point values of arbitrary precision (`float`, `double` etc.) and parsing their textual representation back again (in ordinary or exponent notation).
 
