@@ -103,8 +103,11 @@ matrix:
         - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0 && BUILD_CONFIGURATION=Release"
 
 before_install:
-    - eval "${MATRIX_EVAL}"
-    - if [ ! -d CALC_COVERAGE ]; then CALC_COVERAGE=0; fi
+  - echo $CALC_COVERAGE
+  - echo $MATRIX_EVAL
+  - eval "${MATRIX_EVAL}"
+  - echo $BUILD_CONFIGURATION
+  - if [ ! -d CALC_COVERAGE ]; then CALC_COVERAGE=0; fi
 
 script:
   - mkdir build
