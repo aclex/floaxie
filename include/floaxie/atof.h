@@ -118,6 +118,20 @@ namespace floaxie
 		return result;
 	}
 
+	/** \brief Tiny overload for `atof()` function to allow passing `nullptr`
+	 *  as `str_end` parameter.
+	 */
+	template
+	<
+		typename FloatType,
+		typename CharType,
+		typename FallbackCallable = FloatType (const CharType*, CharType**)
+		>
+	inline value_and_status<FloatType> atof(const CharType* str, std::nullptr_t str_end, FallbackCallable fallback_func = default_fallback<FloatType, CharType>)
+	{
+		return atof<FloatType, CharType, FallbackCallable>(str, static_cast<CharType**>(str_end), fallback_func);
+	}
+
 	/** \brief Parses floating point represented in `std::basic_string`.
 	 *
 	 * `atof()` adapter, which may be more useful for cases, where
@@ -146,7 +160,7 @@ namespace floaxie
 	>
 	inline value_and_status<FloatType> from_string(const std::basic_string<CharType>& str, FallbackCallable fallback_func = default_fallback<FloatType, CharType>)
 	{
-		return atof<FloatType, CharType>(str.c_str(), nullptr, fallback_func);
+		return atof<FloatType>(str.c_str(), nullptr, fallback_func);
 	}
 }
 

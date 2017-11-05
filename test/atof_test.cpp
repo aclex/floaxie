@@ -100,7 +100,7 @@ int main(int, char**)
 		return 4;
 
 	// and, finally, check conversion with no `str_end` specified
-	atof<double>("0.5", static_cast<char**>(nullptr));
+	atof<double>("0.5", nullptr);
 
 	return 0;
 }
