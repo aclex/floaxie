@@ -122,4 +122,4 @@ script:
 
 after_success:
   # Uploading report to codecov.io, if calculating coverage
-  - if [ $CALC_COVERAGE == 1 ]; then bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"; fi
+  - if [ $CALC_COVERAGE == 1 ]; then bash <(curl -s https://codecov.io/bash | sed "s/\"gcov\"/\"gcov-7\"/") || echo "Codecov did not collect coverage reports"; fi
