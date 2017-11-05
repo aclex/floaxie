@@ -32,6 +32,16 @@ int main(int, char**)
 	if (default_fallback<long double, wchar_t>(test_wval, nullptr) != std::wcstold(test_wval, nullptr))
 		return -6;
 
+	// test check_errno
+	const auto ch1 = check_errno(0.5f);
+	if (ch1 != conversion_status::success)
+		return -7;
+
+	const char abnormal_val[] = "0.5e-588";
+	const float test_val = std::strtof(abnormal_val, nullptr);
+	const auto ch2 = check_errno(test_val);
+	if (ch2 != conversion_status::underflow)
+		return -8;
 
 	return 0;
 }
