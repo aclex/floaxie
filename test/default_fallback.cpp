@@ -38,8 +38,8 @@ int main(int, char**)
 		return -7;
 
 	const char abnormal_val[] = "0.5e-588";
-	const float test_val = std::strtof(abnormal_val, nullptr);
-	const auto ch2 = check_errno(test_val);
+	const float test_abnormal_val = std::strtof(abnormal_val, nullptr);
+	const auto ch2 = check_errno(test_abnormal_val);
 	if (ch2 != conversion_status::underflow)
 		return -8;
 
