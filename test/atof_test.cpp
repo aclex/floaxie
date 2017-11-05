@@ -92,5 +92,15 @@ int main(int, char**)
 
 		cout << fallback_count << " times out of " << test_chain.size() << " fallback conversion was called" << endl;
 	}
+
+	// also check parsing of non-numeric string
+	const char non_num_str[] = "aazz";
+	atof<double>(non_num_str, &str_end);
+	if (str_end != non_num_str)
+		return 4;
+
+	// and, finally, check conversion with no `str_end` specified
+	atof<double>("0.5", static_cast<char**>(nullptr));
+
 	return 0;
 }
