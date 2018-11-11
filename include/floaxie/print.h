@@ -35,7 +35,7 @@ namespace floaxie
 	 *
 	 * Useful for debugging purposes.
 	 */
-	std::string print_binary(double f)
+	std::string inline print_binary(double f)
 	{
 		auto s(std::bitset<64>(type_punning_cast<std::uint64_t>(f)).to_string());
 		s.insert(1, 1, ' ');
@@ -44,13 +44,13 @@ namespace floaxie
 	}
 
 	/** \brief Print arbitrary numeric value in binary format. */
-	template<typename NumericType> std::string print_binary(NumericType v)
+	template<typename NumericType> inline std::string print_binary(NumericType v)
 	{
 		return std::bitset<bit_size<NumericType>()>(v).to_string();
 	}
 
 	/** \brief Print arbitrary numeric value as if it were `double`. */
-	template<typename NumericType> std::string print_double_presentation(NumericType v)
+	template<typename NumericType> inline std::string print_double_presentation(NumericType v)
 	{
 		auto s(std::bitset<64>(v).to_string());
 		s.insert(1, 1, ' ');
