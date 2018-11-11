@@ -144,6 +144,7 @@ namespace floaxie
 	 */
 	template<typename NumericType> constexpr NumericType mask(std::size_t n) noexcept
 	{
+		static_assert(!std::is_signed<NumericType>::value, "Unsigned integral type is expected.");
 		return n < bit_size<NumericType>() ? raised_bit<NumericType>(n) - 1 : std::numeric_limits<NumericType>::max();
 	}
 
