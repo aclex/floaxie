@@ -6,6 +6,7 @@ matrix:
 branches:
   only:
     - master
+    - target_interface
     - /^\d+\.\d+(\.\d+)?(-\S*)?$/
 
 platform:
