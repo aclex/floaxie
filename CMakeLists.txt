@@ -1,27 +1,27 @@
 project(floaxie)
 
-cmake_minimum_required(VERSION 3.1.3)
+cmake_minimum_required(VERSION 3.13)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/common/Modules/")
 
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+add_library(floaxie INTERFACE)
+target_include_directories(floaxie INTERFACE include/)
+
+target_compile_features(floaxie INTERFACE cxx_std_14)
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-	add_definitions(-Wall)
-	add_definitions(-Wextra)
-	add_definitions(-Wpedantic)
-	add_definitions(-Werror)
+	target_compile_options(floaxie INTERFACE -Wall)
+	target_compile_options(floaxie INTERFACE -Wextra)
+	target_compile_options(floaxie INTERFACE -Wpedantic)
+	target_compile_options(floaxie INTERFACE -Werror)
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-	add_definitions(-Wall)
-	add_definitions(-Wextra)
-	add_definitions(-pedantic)
-	add_definitions(-Werror)
+	target_compile_options(floaxie INTERFACE -Wall)
+	target_compile_options(floaxie INTERFACE -Wextra)
+	target_compile_options(floaxie INTERFACE -pedantic)
+	target_compile_options(floaxie INTERFACE -Werror)
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-	add_definitions("/W4 /wd4244 /wd4805 /wd4389 /wd4267 /WX")
+	target_compile_options(floaxie INTERFACE "/W4 /wd4244 /wd4805 /wd4389 /wd4267 /WX")
 endif ()
-
-include_directories(include)
 
 add_subdirectory(example)
 
