@@ -1,4 +1,7 @@
 include(NewTest)
+include(ApplyStrictCompileOptions)
+
+apply_strict_compile_options_to_this_directory()
 
 new_test(roundtrip.cpp floaxie)
 
