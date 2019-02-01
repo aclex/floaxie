@@ -23,7 +23,9 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 	target_compile_options(floaxie INTERFACE "/W4 /wd4244 /wd4805 /wd4389 /wd4267 /WX")
 endif ()
 
-add_subdirectory(example)
+if (BUILD_EXAMPLES)
+	add_subdirectory(example)
+endif ()
 
 if (CALC_COVERAGE AND (CMAKE_BUILD_TYPE STREQUAL "Debug") AND CMAKE_COMPILER_IS_GNUCXX)
 	set(COVERAGE_ENABLED TRUE)
