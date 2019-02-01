@@ -20,7 +20,8 @@ install:
   - git submodule update --init --recursive
 
 before_build:
-  - choco upgrade cmake
+  - choco upgrade cmake --version 3.13.0
+  - set path=C:\Program Files\CMake\bin;%path%
   - cmake -G "Visual Studio 15 2017 Win64" -DBUILD_TESTS=1 .
 
 build:
