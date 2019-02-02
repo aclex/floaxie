@@ -72,10 +72,10 @@ int main(int, char**)
 
 Including to CMake project as a subproject
 -------
-Since version 1.2 it's possible to include Floaxie as a subproject to any CMake project so easily thanks to modern CMake `INTERFACE_LIBRARY` target facilities. Unfortunately, this works fully since CMake 3.13, so its minimum required version had to be increased.
+Since version 1.2 it's possible to include Floaxie as a subproject in any CMake project quite easily thanks to modern CMake `INTERFACE_LIBRARY` target facilities. Unfortunately, this works fully since CMake 3.13, so its minimum required version had to be increased.
 
-`CMakeLists.txt` of consumer CMake project would look like this (given Floaxie is cloned to `floaxie` subdirectory)':
 ```{.cmake}
+`CMakeLists.txt` of a consumer CMake project would look like this (given Floaxie is cloned to `floaxie` subdirectory)':
 project(foo)
 
 cmake_minimum_required(VERSION 3.13)
