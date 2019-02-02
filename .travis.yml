@@ -109,6 +109,19 @@ matrix:
         - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
         - BUILD_CONFIGURATION=Release
 
+install:
+    - DEPS_DIR="${HOME}/deps"
+    - |
+      if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
+        CMAKE_URL="https://cmake.org/files/v3.13/cmake-3.13.0-Linux-x86_64.tar.gz"
+        mkdir -p ${DEPS_DIR}/cmake && travis_retry wget --no-check-certificate --quiet -O - ${CMAKE_URL} | tar --strip-components=1 -xz -C ${DEPS_DIR}/cmake
+        export PATH=${DEPS_DIR}/cmake/bin:${PATH}
+        echo ${PATH}
+      else
+        brew install cmake || brew upgrade cmake
+      fi
+    - cmake --version
+
 before_install:
     - eval "${MATRIX_EVAL}"
     - if [ -z CALC_COVERAGE ]; then CALC_COVERAGE=0; fi
