@@ -442,7 +442,7 @@ namespace floaxie
 
 			pl.normalize_from_ieee754(); // as we increase precision of IEEE-754 type by 1
 
-			const unsigned char shift_amount(1 + nth_bit(mi.m_f, std::numeric_limits<FloatType>::digits));
+			const unsigned char shift_amount(1 + (mi.m_f == hidden_bit()));
 
 			mi.m_f <<= shift_amount;
 			mi.m_f -= 1;
