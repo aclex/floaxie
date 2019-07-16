@@ -16,7 +16,7 @@ project(floaxie
 
 
 add_library(floaxie INTERFACE)
-target_include_directories(floaxie INTERFACE include/)
+target_include_directories(floaxie INTERFACE include)
 
 target_compile_features(floaxie INTERFACE cxx_std_14)
 
