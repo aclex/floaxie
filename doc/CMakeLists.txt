@@ -9,3 +9,5 @@ add_custom_target(doc ALL
 				  WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/doc
 				  COMMENT "Generating API documentation with Doxygen"
 				  VERBATIM)
+
+install(DIRECTORY ${PROJECT_BINARY_DIR}/doc/html DESTINATION ${CMAKE_INSTALL_DOCDIR})
