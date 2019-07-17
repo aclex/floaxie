@@ -28,7 +28,7 @@ include(CMakePackageConfigHelpers)
 set(CONFIG_PACKAGE_INSTALL_DIR lib/cmake/${PROJECT_NAME})
 
 write_basic_package_version_file(
-	${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake
+	${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake
 	VERSION ${PROJECT_VERSION}
 	COMPATIBILITY SameMajorVersion
 	)
