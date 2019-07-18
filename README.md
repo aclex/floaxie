@@ -13,7 +13,7 @@ Compiler compatibility
 ----------------------
 - [x] GCC 5
 - [x] Clang 3.6
-- [x] Visual Studio 2017
+- [x] Visual Studio 2017 15.0
 
 Printing
 --------
