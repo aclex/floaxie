@@ -6,6 +6,7 @@ language: cpp
 branches:
   only:
     - master
+    - ci_debug
     - /^\d+\.\d+(\.\d+)?(-\S*)?$/
 
 os: linux
