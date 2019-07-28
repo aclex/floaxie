@@ -1,5 +1,5 @@
 /*
- * Copyright 2015, 2016 Alexey Chernov <4ernov@gmail.com>
+ * Copyright 2015-2019 Alexey Chernov <4ernov@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ namespace floaxie
 	 * (not a number) value representation (case insensitive) to help
 	 * converting it to quiet NaN and finding the end of the read value.
 	 *
-	 * \param str character buffer to analyze
+	 * \param str character buffer to analyze.
 	 *
 	 * \return number of consumed characters. Naturally, if it's equal to zero,
 	 * NaN representation wasn't found.
@@ -90,7 +90,7 @@ namespace floaxie
 	 * Searches for either "inf" or "infinity" sequence (case insensitive)
 	 * to determine infinite floating point value representation.
 	 *
-	 * \param str character buffer to analyze
+	 * \param str character buffer to analyze.
 	 *
 	 * \return number of consumed characters. Naturally, if it's equal to zero,
 	 * infinity representation wasn't found.
@@ -130,13 +130,13 @@ namespace floaxie
 	 * Extracts decimal digits from fraction part and returns it as numerator
 	 * value with denominator equal to \f$10^{\kappa}\f$.
 	 *
-	 * \tparam kappa maximum number of decimal digits to extract
+	 * \tparam kappa maximum number of decimal digits to extract.
 	 * \tparam FloatType destination type of floating point value to store the
-	 * results
+	 * results.
 	 * \tparam CharType character type (typically `char` or `wchar_t`) \p **str**
-	 * consists of
+	 * consists of.
 	 *
-	 * \param str character buffer to extract from
+	 * \param str character buffer to extract from.
 	 *
 	 * \return Numerator value of the extracted decimal digits (i.e. as they
 	 * are actually written after the decimal point).
@@ -180,8 +180,8 @@ namespace floaxie
 	/** \brief Return structure for `parse_digits`.
 	 *
 	 * \tparam FloatType destination type of floating point value to store the
-	 * results
-	 * \tparam CharType character type (typically `char` or `wchar_t`) used
+	 * results.
+	 * \tparam CharType character type (typically `char` or `wchar_t`) used.
 	 */
 	template<typename FloatType, typename CharType> struct digit_parse_result
 	{
@@ -216,12 +216,12 @@ namespace floaxie
 	 * and calculates main parts of floating point value — mantissa, exponent,
 	 * sign, fractional part.
 	 *
-	 * \tparam kappa maximum number of digits to expect
-	 * \tparam calc_frac if `true`, try to calculate fractional part, if any
+	 * \tparam kappa maximum number of digits to expect.
+	 * \tparam calc_frac if `true`, try to calculate fractional part, if any.
 	 * \tparam FloatType destination type of floating point value to store the
-	 * results
+	 * results.
 	 * \tparam CharType character type (typically `char` or `wchar_t`) \p **str**
-	 * consists of
+	 * consists of.
 	 *
 	 * \param str Character buffer with floating point value representation to
 	 * parse.
@@ -365,15 +365,15 @@ namespace floaxie
 
 	/** \brief Return structure for `parse_mantissa`.
 	 *
-	 * \tparam FloatType destination value floating point type
-	 * \tparam CharType character type (typically `char` or `wchar_t`) used
+	 * \tparam FloatType destination value floating point type.
+	 * \tparam CharType character type (typically `char` or `wchar_t`) used.
 	 */
 	template<typename FloatType, typename CharType> struct mantissa_parse_result
 	{
 		/** \brief Calculated mantissa value. */
 		diy_fp<FloatType> value;
 
-		/** \brief Corrected value of decimal exponent value */
+		/** \brief Corrected value of decimal exponent value. */
 		int K;
 
 		/** \brief Pointer to the memory after the parsed part of the buffer. */
@@ -392,9 +392,9 @@ namespace floaxie
 	 * rounding up according to the fractional part value.
 	 *
 	 * \tparam FloatType destination type of floating point value to store the
-	 * results
+	 * results.
 	 * \tparam CharType character type (typically `char` or `wchar_t`) \p **str**
-	 * consists of
+	 * consists of.
 	 *
 	 * \param str Character buffer with floating point value representation to
 	 * parse.
@@ -447,7 +447,7 @@ namespace floaxie
 
 	/** \brief Return structure for `parse_exponent`.
 	 *
-	 * \tparam CharType character type (typically `char` or `wchar_t`) used
+	 * \tparam CharType character type (typically `char` or `wchar_t`) used.
 	 */
 	template<typename CharType> struct exponent_parse_result
 	{
@@ -460,7 +460,7 @@ namespace floaxie
 
 	/** \brief Parses exponent part of the floating point string representation.
 	 *
-	 * \tparam CharType character type (typically `char` or `wchar_t`) of \p **str**
+	 * \tparam CharType character type (typically `char` or `wchar_t`) of \p **str**.
 	 *
 	 * \param str Exponent part of character buffer with floating point value
 	 * representation to parse.
@@ -495,8 +495,8 @@ namespace floaxie
 	/** \brief Return structure, containing **Krosh** algorithm results.
 	 *
 	 * \tparam FloatType destination type of floating point value to store the
-	 * results
-	 * \tparam CharType character type (typically `char` or `wchar_t`) used
+	 * results.
+	 * \tparam CharType character type (typically `char` or `wchar_t`) used.
 	 */
 	template<typename FloatType, typename CharType> struct krosh_result
 	{
@@ -518,13 +518,13 @@ namespace floaxie
 	/** \brief Implements **Krosh** algorithm.
 	 *
 	 * \tparam FloatType destination type of floating point value to store the
-	 * results
+	 * results.
 	 *
 	 * \tparam CharType character type (typically `char` or `wchar_t`) \p **str**
-	 * consists of
+	 * consists of.
 	 *
 	 * \param str Character buffer with floating point value
-	 * representation to parse
+	 * representation to parse.
 	 *
 	 * \return `krosh_result` structure with all the results of **Krosh**
 	 * algorithm.

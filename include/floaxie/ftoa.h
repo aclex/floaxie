@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Alexey Chernov <4ernov@gmail.com>
+ * Copyright 2015-2019 Alexey Chernov <4ernov@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,13 +73,13 @@ namespace floaxie
 	 *    sequence of one, two of three decimal digits.
 	 *
 	 * \tparam FloatType type of floating point value, calculated using passed
-	 * input parameter \p **v**
+	 * input parameter \p **v**.
 	 * \tparam CharType character type (typically `char` or `wchar_t`) of the
-	 * output buffer \p **buffer**
+	 * output buffer \p **buffer**.
 	 *
-	 * \param v floating point value to print
+	 * \param v floating point value to print.
 	 * \param buffer character buffer of enough size (see `max_buffer_size()`)
-	 * to print the representation to
+	 * to print the representation to.
 	 *
 	 * \see `max_buffer_size()`
 	 */
@@ -144,13 +144,13 @@ namespace floaxie
 	 * are written to one long buffer.
 	 *
 	 * \tparam FloatType type of floating point value, calculated using passed
-	 * input parameter \p **v**
+	 * input parameter \p **v**.
 	 * \tparam CharType character type (typically `char` or `wchar_t`) of the
-	 * output buffer \p **buffer**
+	 * output buffer \p **buffer**.
 	 *
-	 * \param v floating point value to print
+	 * \param v floating point value to print.
 	 * \param buffer character buffer of enough size (see `max_buffer_size()`)
-	 * to print the representation to
+	 * to print the representation to.
 	 *
 	 * \see `ftoa()`
 	 */

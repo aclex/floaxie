@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Alexey Chernov <4ernov@gmail.com>
+ * Copyright 2015-2019 Alexey Chernov <4ernov@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,9 +57,9 @@ namespace floaxie
 	 */
 	template<> struct diy_fp_traits<float>
 	{
-		/** \brief Integer type to store mantissa value */
+		/** \brief Integer type to store mantissa value. */
 		typedef std::uint32_t mantissa_type;
-		/** \brief Integer type to store exponent value */
+		/** \brief Integer type to store exponent value. */
 		typedef int exponent_type;
 	};
 
@@ -77,9 +77,9 @@ namespace floaxie
 	 */
 	template<> struct diy_fp_traits<double>
 	{
-		/** \brief Integer type to store mantissa value */
+		/** \brief Integer type to store mantissa value. */
 		typedef std::uint64_t mantissa_type;
-		/** \brief Integer type to store exponent value */
+		/** \brief Integer type to store exponent value. */
 		typedef int exponent_type;
 	};
 
@@ -91,18 +91,18 @@ namespace floaxie
 	 * and **exponent**, suitable to process floating point value of the specified
 	 * precision with maximum efficiency and without losing accuracy.
 	 *
-	 * \tparam FloatType floating point type the representation is instantiated for
+	 * \tparam FloatType floating point type the representation is instantiated for.
 	 * \tparam Traits some inner settings (mainly, integer types to store mantissa and
-	 * exponent) corresponding to `FloatType`
+	 * exponent) corresponding to `FloatType`.
 	 *
 	 * The type is used in **Grisu** and **Krosh** algorithms.
 	 */
 	template<typename FloatType, typename Traits = diy_fp_traits<FloatType>> class diy_fp
 	{
 	public:
-		/** \brief Mantissa storage type abstraction */
+		/** \brief Mantissa storage type abstraction. */
 		typedef typename Traits::mantissa_type mantissa_storage_type;
-		/** \brief Exponent storage type abstraction */
+		/** \brief Exponent storage type abstraction. */
 		typedef typename Traits::exponent_type exponent_storage_type;
 
 	private:
@@ -277,14 +277,12 @@ namespace floaxie
 
 		/** \brief Subtracts the specified `diy_fp` value from the current.
 		 *
-		 * Simple mantissa subtraction of `diy_fp` values. Works fine and neat
-		 * for the case, when left value is bigger, than the right and the
-		 * values are of the same exponent.
+		 * Simple mantissa subtraction of `diy_fp` values.
 		 *
 		 * If exponents of the values differ or mantissa of left value is less,
 		 * than mantissa of right value, the behaviour is undefined.
 		 *
-		 * \param rhs subtrahend
+		 * \param rhs subtrahend.
 		 *
 		 * \return reference to current value, i.e. the result of the
 		 * subtraction.
@@ -311,7 +309,7 @@ namespace floaxie
 		 * in original **Grisu** implementation and also works fine for
 		 * **Krosh**.
 		 *
-		 * \param rhs multiplier
+		 * \param rhs multiplier.
 		 *
 		 * \return reference to current value, i.e. the result of the
 		 * multiplication.
@@ -425,7 +423,7 @@ namespace floaxie
 		 * value within this range can be treated as correct representation of
 		 * the specified one.
 		 *
-		 * \param d floating point value to calculate boundaries for
+		 * \param d floating point value to calculate boundaries for.
 		 *
 		 * \return `std::pair` of two `diy_fp` values, **M-** and **M+**,
 		 * respectively.
@@ -463,8 +461,8 @@ namespace floaxie
 
 		/** \brief Prints `diy_fp` value.
 		 *
-		 * \param os `std::basic_ostream` to print to
-		 * \param v `diy_fp` value to print
+		 * \param os `std::basic_ostream` to print to.
+		 * \param v `diy_fp` value to print.
 		 *
 		 * \return `std::basic_ostream` with the \p **v** value printed.
 		 */

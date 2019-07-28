@@ -25,9 +25,9 @@ namespace floaxie
 	enum class conversion_status : unsigned char
 	{
 
-		success, /**< the conversion was successful */
-		underflow, /**< an underflow occurred during the conversion */
-		overflow /**< an overflow occurred during the conversion */
+		success, /**< The conversion was successful. */
+		underflow, /**< An underflow occurred during the conversion. */
+		overflow /**< An overflow occurred during the conversion. */
 	};
 }
 
