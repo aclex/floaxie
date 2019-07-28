@@ -67,7 +67,7 @@ namespace floaxie
 	/** \brief Calculate the biggest power of 10 divisor for the specified
 	 * value.
 	 */
-	inline kappa_pair_type calculate_kappa_div(half_of_mantissa_storage_type n) noexcept
+	constexpr kappa_pair_type calculate_kappa_div(half_of_mantissa_storage_type n) noexcept
 	{
 		if (n < static_pow<10, 1>()) return make_kappa_div<1>();
 		if (n < static_pow<10, 2>()) return make_kappa_div<2>();
