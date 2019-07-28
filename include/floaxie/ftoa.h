@@ -85,10 +85,32 @@ namespace floaxie
 	 */
 	template<typename FloatType, typename CharType> inline void ftoa(FloatType v, CharType* buffer) noexcept
 	{
-		assert(!std::isnan(v));
-		assert(!std::isinf(v));
-
-		if (v == 0)
+		if (std::isnan(v))
+		{
+			buffer[0] = 'n';
+			buffer[1] = 'a';
+			buffer[2] = 'n';
+			buffer[3] = '\0';
+		}
+		else if (std::isinf(v))
+		{
+			if (v > 0)
+			{
+				buffer[0] = 'i';
+				buffer[1] = 'n';
+				buffer[2] = 'f';
+				buffer[3] = '\0';
+			}
+			else
+			{
+				buffer[0] = '-';
+				buffer[1] = 'i';
+				buffer[2] = 'n';
+				buffer[3] = 'f';
+				buffer[4] = '\0';
+			}
+		}
+		else if (v == 0)
 		{
 			buffer[0] = '0';
 			buffer[1] = '.';
