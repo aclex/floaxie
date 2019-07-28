@@ -75,6 +75,7 @@ matrix:
 
     # 'Release' build type
     - os: linux
+      dist: xenial
       addons:
         apt:
           sources:
@@ -86,6 +87,7 @@ matrix:
         - BUILD_CONFIGURATION=Release
 
     - os: linux
+      dist: xenial
       addons:
         apt:
           sources:
