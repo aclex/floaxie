@@ -167,15 +167,19 @@ namespace floaxie
 		{
 			/** \brief Downsampled floating point result. */
 			FloatType value;
-			/** \brief Status showing possible under- or overflow found during downsampling */
+			/** \brief Status showing possible under- or overflow found during downsampling. */
 			conversion_status status;
 			/** \brief Flag indicating if the conversion is accurate (no
-			 * [rounding errors] (http://www.exploringbinary.com/decimal-to-floating-point-needs-arbitrary-precision/) */
+			 * [rounding errors] (http://www.exploringbinary.com/decimal-to-floating-point-needs-arbitrary-precision/). */
 			bool is_accurate;
 		};
 
 		/** \brief Convert `diy_fp` value back to floating point type correctly
 		 * downsampling mantissa value.
+		 *
+		 * The caller should ensure, that the current mantissa value is not null
+		 * and the whole `diy_fp` value is normalized, otherwise the behaviour is
+		 * undefined.
 		 *
 		 * \return result structure with floating point value of the specified type.
 		 */
@@ -186,11 +190,7 @@ namespace floaxie
 			ret.is_accurate = true;
 			ret.status = conversion_status::success;
 
-			if (m_f == 0 && m_e == 0)
-			{
-				ret.value = FloatType(0);
-				return ret;
-			}
+			assert(m_f != 0);
 
 			assert(is_normalized());
 
@@ -247,7 +247,11 @@ namespace floaxie
 			return m_e;
 		}
 
-		/** \brief Checks if the value is normalized. */
+		/** \brief Checks if the value is normalized.
+		 *
+		 * The behaviour is undefined, if called for null value.
+		 *
+		 */
 		bool is_normalized() const noexcept
 		{
 			assert(m_f != 0); // normalization of zero is undefined
@@ -255,11 +259,14 @@ namespace floaxie
 		}
 
 
-		/** \brief Normalizes the value the common way. */
+		/** \brief Normalizes the value the common way.
+		 *
+		 * The caller should ensure, that the current mantissa value is not null,
+		 * otherwise the behaviour is undefined.
+		 */
 		void normalize() noexcept
 		{
-			if (!m_f)
-				return;
+			assert(m_f != 0); // normalization of zero is undefined
 
 			while (!highest_bit(m_f))
 			{
@@ -476,6 +483,10 @@ namespace floaxie
 		 * `std::numeric_limits`. This information speeds up the normalization,
 		 * allowing to shift the value by several positions right at one take,
 		 * rather than shifting it by one step and checking if it's still not normalized.
+		 *
+		 * The caller should ensure, that the current mantissa value is not null
+		 * and is really represented in IEEE-754 format, otherwise the behaviour
+		 * is undefined.
 		 */
 		void normalize_from_ieee754() noexcept
 		{
@@ -483,8 +494,7 @@ namespace floaxie
 
 			static_assert(mantissa_bit_width >= 0, "Mantissa bit width should be positive.");
 
-			if (!m_f)
-				return;
+			assert(m_f != 0); // normalization of zero is undefined
 
 			while (!nth_bit(m_f, mantissa_bit_width))
 			{

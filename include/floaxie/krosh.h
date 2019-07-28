@@ -408,41 +408,38 @@ namespace floaxie
 
 		const auto& digits_parts(parse_digits<FloatType>(str));
 
+		ret.special = digits_parts.special;
+		ret.str_end = digits_parts.str_end;
+		ret.sign = digits_parts.sign;
+
 		if (digits_parts.special == speciality::no)
 		{
 			ret.value = diy_fp<FloatType>(digits_parts.value, 0);
-
-			auto& w(ret.value);
-			w.normalize();
-
-			ret.special = speciality::no;
 			ret.K = digits_parts.K;
-			ret.str_end = digits_parts.str_end;
-			ret.sign = digits_parts.sign;
 
-			// extract additional binary digits and round up gently
-			if (digits_parts.frac)
+			if (digits_parts.value)
 			{
-				assert(w.exponent() >= (-1) * static_cast<int>(fraction_binary_digits));
-				const std::size_t lsb_pow(fraction_binary_digits + w.exponent());
+				auto& w(ret.value);
+				w.normalize();
 
-				typename diy_fp<FloatType>::mantissa_storage_type f(w.mantissa());
-				f |= digits_parts.frac >> lsb_pow;
-
-				w = diy_fp<FloatType>(f, w.exponent());
-
-				// round correctly avoiding integer overflow, undefined behaviour, pain and suffering
-				if (round_up(digits_parts.frac, lsb_pow).value)
+				// extract additional binary digits and round up gently
+				if (digits_parts.frac)
 				{
-					++w;
+					assert(w.exponent() >= (-1) * static_cast<int>(fraction_binary_digits));
+					const std::size_t lsb_pow(fraction_binary_digits + w.exponent());
+
+					typename diy_fp<FloatType>::mantissa_storage_type f(w.mantissa());
+					f |= digits_parts.frac >> lsb_pow;
+
+					w = diy_fp<FloatType>(f, w.exponent());
+
+					// round correctly avoiding integer overflow, undefined behaviour, pain and suffering
+					if (round_up(digits_parts.frac, lsb_pow).value)
+					{
+						++w;
+					}
 				}
 			}
-		}
-		else
-		{
-			ret.special = digits_parts.special;
-			ret.str_end = digits_parts.str_end;
-			ret.sign = digits_parts.sign;
 		}
 
 		return ret;
@@ -540,7 +537,7 @@ namespace floaxie
 
 		auto mp(parse_mantissa<FloatType>(str));
 
-		if (mp.special == speciality::no)
+		if (mp.special == speciality::no && mp.value.mantissa())
 		{
 			diy_fp<FloatType>& w(mp.value);
 
