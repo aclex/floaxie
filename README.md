@@ -80,7 +80,9 @@ project(foo)
 
 cmake_minimum_required(VERSION 3.13)
 
-add_subdirectory(floaxie)
+# `EXCLUDE_FOR_ALL` here to exclude supplementary targets
+# like `install` from the main project target set
+add_subdirectory(peli EXCLUDE_FROM_ALL) 
 
 add_executable(foo_main foo_main.cpp)
 target_link_libraries(foo_main PUBLIC floaxie)
