@@ -70,6 +70,27 @@ int main(int, char**)
 }
 ```
 
+Building
+--------
+
+Is not required and completely optional, unless you would like to try the examples or tests. Inside `git` project tree it can be done like this:
+
+```shell
+git submodule update --init # to check out common CMake modules' submodule
+mkdir build && cd build
+cmake -DBUILD_EXAMPLES=1 -DBUILD_TESTS=1 ../
+cmake --build . # or just `make` on systems with it
+```
+
+Adding to the project
+---------------------
+
+```shell
+git submodule add https://github.com/aclex/floaxie <desired-path-in-your-project>
+```
+
+Don't forget to do `git submodule update --init --recursive` out of your project tree to pull submodules properly.
+
 Including to CMake project as a subproject
 -------
 Since version 1.2 it's possible to include Floaxie as a subproject in any CMake project quite easily thanks to modern CMake `INTERFACE_LIBRARY` target facilities. Unfortunately, this works fully since CMake 3.13, so its minimum required version had to be increased.
