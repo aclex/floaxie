@@ -2,12 +2,14 @@ floaxie
 =======
 [![Build Status in GCC/Clang](https://travis-ci.org/aclex/floaxie.svg?branch=master)](https://travis-ci.org/aclex/floaxie) [![Build status in Visual Studio](https://ci.appveyor.com/api/projects/status/nhidn1n2o66etirk?svg=true)](https://ci.appveyor.com/project/aclex/floaxie) [![Code coverage](https://codecov.io/gh/aclex/floaxie/branch/master/graph/badge.svg)](https://codecov.io/gh/aclex/floaxie)
 
-Floaxie is C++14 header-only library for printing floating point values of arbitrary precision (`float`, `double` etc.) and parsing their textual representation back again (in ordinary or exponent notation).
+Floaxie is C++14 header-only library for [fast](https://github.com/miloyip/dtoa-benchmark/) printing floating point values of arbitrary precision (`float`, `double` etc.) and parsing their textual representation back again (in ordinary or exponent notation).
 
 What is it for?
 ---------------
 
 One is obviously not worried too much about the speed of the values being printed on the console, so the primary places to use the library are readers, writers, encoders and decoders of different text-based formats (e.g. JSON, XML and so on), applications interacting through text pipes or rendering data structures.
+
+Please, take a look also at the alternatives solving the same problem mentioned in the benchmark of @miloyip [here](https://github.com/miloyip/dtoa-benchmark/), if `floaxie` doesn't suite you well.
 
 Compiler compatibility
 ----------------------
@@ -73,12 +75,12 @@ int main(int, char**)
 Building
 --------
 
-Is not required and completely optional, unless you would like to try the examples or tests. Inside `git` project tree it can be done like this:
+Building is not required and completely optional, unless you would like to try the examples or tests or build the local documentation. Inside `git` project tree it can be done like this:
 
 ```shell
 git submodule update --init # to check out common CMake modules' submodule
 mkdir build && cd build
-cmake -DBUILD_EXAMPLES=1 -DBUILD_TESTS=1 ../
+cmake -DBUILD_EXAMPLES=1 -DBUILD_TESTS=1 -DBUILD_DOCUMENTATION=1 ../ # switch on the desired flags
 cmake --build . # or just `make` on systems with it
 ```
 
