@@ -269,19 +269,27 @@ namespace floaxie
 			case '7':
 			case '8':
 			case '9':
-				if (parsed_digits.empty() ||
-					parsed_digits.size() + zero_substring_length < kappa) // we stop one digit before the maximum decimal digits to prevent overflow
+				if (zero_substring_length && parsed_digits.size() < kappa)
 				{
-					if (zero_substring_length)
-					{
-						if (!parsed_digits.empty())
-							parsed_digits.insert(parsed_digits.end(), zero_substring_length, 0);
+					const std::size_t spare_digits { kappa - parsed_digits.size() };
+					auto zero_copy_count { zero_substring_length };
+					auto pow_gain_reduced { pow_gain };
 
-						fraction_digits_count += zero_substring_length - pow_gain;
-						zero_substring_length = 0;
-						pow_gain = 0;
+					if (!parsed_digits.empty())
+					{
+						zero_copy_count = std::min(zero_substring_length, spare_digits);
+						pow_gain_reduced = std::min(pow_gain, spare_digits);
+
+						parsed_digits.insert(parsed_digits.end(), zero_copy_count, 0);
 					}
 
+					fraction_digits_count += zero_copy_count - pow_gain_reduced;
+					zero_substring_length -= zero_copy_count;
+					pow_gain -= pow_gain_reduced;
+				}
+
+				if (parsed_digits.size() < kappa)
+				{
 					parsed_digits.push_back(c - '0');
 					fraction_digits_count += dot_set;
 				}
