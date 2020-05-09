@@ -272,8 +272,8 @@ namespace floaxie
 				if (zero_substring_length && parsed_digits.size() < kappa)
 				{
 					const std::size_t spare_digits { kappa - parsed_digits.size() };
-					auto zero_copy_count { zero_substring_length };
-					auto pow_gain_reduced { pow_gain };
+					auto zero_copy_count = zero_substring_length;
+					auto pow_gain_reduced = pow_gain;
 
 					if (!parsed_digits.empty())
 					{
