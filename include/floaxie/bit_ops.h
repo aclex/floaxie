@@ -186,7 +186,9 @@ namespace floaxie
 	 *
 	 * \param last_bits right suffix of the value, where rounding takes place.
 	 * \param round_to_power the power (0-based right-to-left index) of the
-	 * target position (which rounding is being performed to).
+	 * target position (which rounding is being performed to). According to the
+	 * algorithm math it should be greater, than zero, otherwise behaviour is
+	 * undefined.
 	 *
 	 * \returns `round_result` structure with the rounding decision.
 	 */
@@ -194,8 +196,7 @@ namespace floaxie
 	{
 		round_result ret;
 
-		if (!round_to_power)
-			return { false, true };
+		assert(round_to_power > 0);
 
 		const NumericType round_bit(raised_bit<NumericType>(round_to_power - 1));
 		const NumericType check_mask(mask<NumericType>(round_to_power + 1) ^ round_bit);
