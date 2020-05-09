@@ -44,7 +44,7 @@ int main(int, char**)
 			<< ref_value << ", ret: "
 			<< ret << endl;
 			++fault_number;
-// 			return -1;
+			return -1;
 		}
 	}
 	cout << "krosh failed " << fault_number << " times out of " << short_numbers_length << endl;

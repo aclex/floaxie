@@ -194,6 +194,9 @@ namespace floaxie
 	{
 		round_result ret;
 
+		if (!round_to_power)
+			return { false, true };
+
 		const NumericType round_bit(raised_bit<NumericType>(round_to_power - 1));
 		const NumericType check_mask(mask<NumericType>(round_to_power + 1) ^ round_bit);
 		ret.is_accurate = (last_bits & mask<NumericType>(round_to_power)) != round_bit;
