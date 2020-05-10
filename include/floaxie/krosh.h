@@ -433,7 +433,7 @@ namespace floaxie
 				// extract additional binary digits and round up gently
 				if (digits_parts.frac)
 				{
-					assert(w.exponent() >= (-1) * static_cast<int>(fraction_binary_digits));
+					assert(w.exponent() > (-1) * static_cast<int>(fraction_binary_digits));
 					const std::size_t lsb_pow(fraction_binary_digits + w.exponent());
 
 					typename diy_fp<FloatType>::mantissa_storage_type f(w.mantissa());
