@@ -571,7 +571,7 @@ namespace floaxie
 					}
 					else // !b2
 					{
-						ret.value = huge_value<FloatType>;
+						ret.value = huge_value<FloatType>();
 						ret.status = conversion_status::overflow;
 					}
 

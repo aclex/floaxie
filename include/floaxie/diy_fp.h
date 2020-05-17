@@ -205,7 +205,7 @@ namespace floaxie
 
 			if (m_e >= std::numeric_limits<FloatType>::max_exponent)
 			{
-				ret.value = huge_value<FloatType>;
+				ret.value = huge_value<FloatType>();
 				ret.status = conversion_status::overflow;
 				return ret;
 			}

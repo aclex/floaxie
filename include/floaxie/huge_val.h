@@ -30,16 +30,28 @@ namespace floaxie
 	 * \see [HUGE_VALF, HUGE_VAL, HUGE_VALL]
 	 * (http://en.cppreference.com/w/cpp/numeric/math/HUGE_VAL)
 	 */
-	template<typename FloatType> constexpr FloatType huge_value = std::numeric_limits<FloatType>::infinity();
+	template<typename FloatType> constexpr inline FloatType huge_value() noexcept
+	{
+		return std::numeric_limits<FloatType>::infinity();
+	}
 
 	/** \brief `float`. */
-	template<> constexpr float huge_value<float> = HUGE_VALF;
+	template<> constexpr inline float huge_value<float>() noexcept
+	{
+		return HUGE_VALF;
+	}
 
 	/** \brief `double`. */
-	template<> constexpr double huge_value<double> = HUGE_VAL;
+	template<> constexpr inline double huge_value<double>() noexcept
+	{
+		return HUGE_VAL;
+	}
 
 	/** \brief `long double`. */
-	template<> constexpr long double huge_value<long double> = HUGE_VALL;
+	template<> constexpr inline long double huge_value<long double>() noexcept
+	{
+		return HUGE_VALL;
+	}
 }
 
 #endif // FLOAXIE_HUGE_VAL_H
