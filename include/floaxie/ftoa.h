@@ -81,9 +81,11 @@ namespace floaxie
 	 * \param buffer character buffer of enough size (see `max_buffer_size()`)
 	 * to print the representation to.
 	 *
+	 * \return number of characters actually written.
+	 *
 	 * \see `max_buffer_size()`
 	 */
-	template<typename FloatType, typename CharType> inline void ftoa(FloatType v, CharType* buffer) noexcept
+	template<typename FloatType, typename CharType> inline std::size_t ftoa(FloatType v, CharType* buffer) noexcept
 	{
 		if (std::isnan(v))
 		{
@@ -91,6 +93,8 @@ namespace floaxie
 			buffer[1] = 'a';
 			buffer[2] = 'n';
 			buffer[3] = '\0';
+
+			return 3;
 		}
 		else if (std::isinf(v))
 		{
@@ -100,6 +104,8 @@ namespace floaxie
 				buffer[1] = 'n';
 				buffer[2] = 'f';
 				buffer[3] = '\0';
+
+				return 3;
 			}
 			else
 			{
@@ -108,6 +114,8 @@ namespace floaxie
 				buffer[2] = 'n';
 				buffer[3] = 'f';
 				buffer[4] = '\0';
+
+				return 4;
 			}
 		}
 		else if (v == 0)
@@ -116,6 +124,8 @@ namespace floaxie
 			buffer[1] = '.';
 			buffer[2] = '0';
 			buffer[3] = '\0';
+
+			return 3;
 		}
 		else
 		{
@@ -128,7 +138,7 @@ namespace floaxie
 			int len, K;
 
 			grisu2<alpha, gamma>(v, buffer, &len, &K);
-			prettify<decimal_scientific_threshold>(buffer, len, K);
+			return (v < 0) + prettify<decimal_scientific_threshold>(buffer, len, K);
 		}
 	}
 

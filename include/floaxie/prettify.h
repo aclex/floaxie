@@ -82,8 +82,10 @@ namespace floaxie
 	 *
 	 * \param K decimal exponent value.
 	 * \param buffer character buffer to print to.
+	 *
+	 * \return number of characters written to the buffer.
 	 */
-	template<typename CharType> inline void fill_exponent(unsigned int K, CharType* buffer) noexcept
+	template<typename CharType> inline std::size_t fill_exponent(unsigned int K, CharType* buffer) noexcept
 	{
 		const unsigned char hundreds = K / 100;
 		K %= 100;
@@ -95,6 +97,8 @@ namespace floaxie
 		buffer[1] = d[1];
 
 		buffer[2] = '\0';
+
+		return 2 + (hundreds > 0);
 	}
 
 	/** \brief Prints exponent (*scientific*) part of value representation in
@@ -108,9 +112,11 @@ namespace floaxie
 	 * representation.
 	 * \param dot_pos number of character, where dot position should be placed.
 	 *
+	 * \return number of characters written to the buffer.
+	 *
 	 * \see `print_decimal()`
 	 */
-	template<typename CharType> inline void print_scientific(CharType* buffer, const unsigned int len, const int dot_pos) noexcept
+	template<typename CharType> inline std::size_t print_scientific(CharType* buffer, const unsigned int len, const int dot_pos) noexcept
 	{
 		const int K = dot_pos - 1;
 		if (len > 1)
@@ -126,7 +132,7 @@ namespace floaxie
 		buffer[2] = '-';
 		buffer += K < 0;
 
-		fill_exponent(std::abs(K), buffer + 2);
+		return len + /*dot*/(len > 1) + /*'e'*/1 + /*exp sign*/(K < 0) + fill_exponent(std::abs(K), buffer + 2);
 	}
 
 	/** \brief Formats decimal mantissa part of value representation.
@@ -140,8 +146,10 @@ namespace floaxie
 	 * \param buffer character buffer with printed digits.
 	 * \param len length of current representation in \p **buffer**.
 	 * \param k decimal exponent of the value.
+	 *
+	 * \return number of characters written to the buffer.
 	 */
-	template<typename CharType> inline void print_decimal(CharType* buffer, const unsigned int len, const int k) noexcept
+	template<typename CharType> inline std::size_t print_decimal(CharType* buffer, const unsigned int len, const int k) noexcept
 	{
 		const int dot_pos = static_cast<int>(len) + k;
 
@@ -161,6 +169,8 @@ namespace floaxie
 		wrap::memset(buffer + len, CharType('0'), right_offset);
 		buffer[actual_dot_pos] = '.';
 		buffer[term_pos] = '\0';
+
+		return term_pos;
 	}
 
 	/** \brief Makes final format corrections to have the string representation
@@ -177,11 +187,13 @@ namespace floaxie
 	 * \param len length of current representation in \p **buffer**.
 	 * \param k decimal exponent of the value.
 	 *
+	 * \return number of characters written to the buffer.
+	 *
 	 * \see `print_decimal()`
 	 * \see `print_scientific()`
 	 */
 	template<std::size_t decimal_scientific_threshold, typename CharType>
-	inline void prettify(CharType* buffer, const unsigned int len, const int k) noexcept
+	inline std::size_t prettify(CharType* buffer, const unsigned int len, const int k) noexcept
 	{
 		/* v = buffer * 10 ^ k
 			dot_pos is such that 10 ^ (dot_pos - 1) <= v < 10 ^ dot_pos
@@ -195,13 +207,14 @@ namespace floaxie
 		switch (choose_format<decimal_scientific_threshold>(field_width))
 		{
 		case format::decimal:
-			print_decimal(buffer, len, k);
-			break;
+			return print_decimal(buffer, len, k);
 
 		case format::scientific:
-			print_scientific(buffer, len, dot_pos);
-			break;
+			return print_scientific(buffer, len, dot_pos);
 		}
+
+		// never reach here
+		return 0;
 	}
 }
 
