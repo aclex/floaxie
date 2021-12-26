@@ -121,11 +121,9 @@ namespace floaxie
 		else if (v == 0)
 		{
 			buffer[0] = '0';
-			buffer[1] = '.';
-			buffer[2] = '0';
 			buffer[3] = '\0';
 
-			return 3;
+			return 1;
 		}
 		else
 		{

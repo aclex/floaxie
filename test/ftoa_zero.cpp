@@ -15,7 +15,7 @@ int main(int, char**)
 {
 	char buf[max_buffer_size<decltype(test_val)>()];
 	ftoa(test_val, buf);
-	if (std::strcmp(buf, "0.0"))
+	if (std::strcmp(buf, "0"))
 	{
 		return -1;
 	}
