@@ -23,10 +23,11 @@ before_build:
   - set path=C:\Program Files\CMake\bin;%path%
   - cmake -G "Visual Studio 15 2017 Win64" -DBUILD_TESTS=1 .
 
-build:
-  project: $(APPVEYOR_BUILD_FOLDER)\$(APPVEYOR_PROJECT_NAME).sln
+#build:
+#  project: $(APPVEYOR_BUILD_FOLDER)\$(APPVEYOR_PROJECT_NAME).sln
 
-# build_script:
+build_script:
+  - msbuild %APPVEYOR_PROJECT_NAME%.sln /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
 #   - mkdir build
 #   - cd build
 #   - cmake ..
