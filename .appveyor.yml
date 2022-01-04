@@ -23,13 +23,11 @@ before_build:
   - set path=C:\Program Files\CMake\bin;%path%
   - cmake -G "Visual Studio 15 2017 Win64" -DBUILD_TESTS=1 .
 
-build: off
-
 build_script:
-   - mkdir build
-   - cd build
-   - cmake ..
-   - cmake --build .
+  - mkdir build
+  - cd build
+  - cmake ..
+  - cmake --build .
 
 test_script:
   - ctest --output-on-failure
