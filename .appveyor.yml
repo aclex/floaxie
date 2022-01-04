@@ -27,11 +27,11 @@ before_build:
 #  project: $(APPVEYOR_BUILD_FOLDER)\$(APPVEYOR_PROJECT_NAME).sln
 
 build_script:
-  - msbuild %APPVEYOR_PROJECT_NAME%.sln /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
-#   - mkdir build
-#   - cd build
-#   - cmake ..
-#   - cmake --build .
+#  - msbuild %APPVEYOR_PROJECT_NAME%.sln /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+   - mkdir build
+   - cd build
+   - cmake ..
+   - cmake --build .
 
 test_script:
   - ctest --output-on-failure
