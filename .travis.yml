@@ -9,8 +9,6 @@ branches:
     - ci_debug
     - /^\d+\.\d+(\.\d+)?(-\S*)?$/
 
-os: linux
-
 matrix:
   include:
     # 'Debug' build type
@@ -72,6 +70,10 @@ matrix:
             - clang-5.0
       env:
         - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
+        - BUILD_CONFIGURATION=Debug
+
+    - os: windows
+      env:
         - BUILD_CONFIGURATION=Debug
 
     # 'Release' build type
@@ -143,7 +145,7 @@ install:
         mkdir -p ${DEPS_DIR}/cmake && travis_retry wget --no-check-certificate --quiet -O - ${CMAKE_URL} | tar --strip-components=1 -xz -C ${DEPS_DIR}/cmake
         export PATH=${DEPS_DIR}/cmake/bin:${PATH}
         echo ${PATH}
-      else
+      elif [[ "${TRAVIS_OS_NAME}" == "osx" ]] then
         brew install cmake || brew upgrade cmake
       fi
     - cmake --version
