@@ -275,6 +275,9 @@ namespace floaxie
 			}
 		}
 
+		/** \brief Copy assignment operator. */
+		diy_fp& operator=(const diy_fp&) = default;
+
 		/** \brief Subtracts the specified `diy_fp` value from the current.
 		 *
 		 * Simple mantissa subtraction of `diy_fp` values.
